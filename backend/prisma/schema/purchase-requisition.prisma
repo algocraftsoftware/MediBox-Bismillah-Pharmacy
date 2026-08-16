@@ -1,0 +1,97 @@
+// =======================================================
+// SHOP LEVEL — PURCHASE REQUISITION
+// =======================================================
+
+enum RequisitionMode {
+  PHARMA
+  NON_PHARMA
+}
+
+enum RequisitionType {
+  REGULAR
+  URGENT
+  OTHERS
+}
+
+enum RequisitionStatus {
+  UNAPPROVED
+  APPROVED
+  FINAL_APPROVED
+}
+
+model RequisitionCounter {
+  shopId Int @id
+  value  Int @default(0)
+}
+
+model OrderCounter {
+  shopId Int @id
+  value  Int @default(0)
+}
+
+model PurchaseRequisition {
+  id               Int                @id @default(autoincrement())
+  shopId           Int
+  shop             Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  storeId          Int
+  store            Store              @relation("RequisitionStore", fields: [storeId], references: [id])
+  // Destination the goods are requisitioned to, e.g. "ASTER HEAD OFFICE" —
+  // a label, not a Store row (deliveries don't need their own stock ledger).
+  deliverTo        String
+  supplierId       Int
+  supplier         Supplier           @relation(fields: [supplierId], references: [id])
+  requisitionNo    String
+  mode             RequisitionMode
+  type             RequisitionType    @default(REGULAR)
+  consumptionDays  Int                @default(30)
+  status           RequisitionStatus  @default(UNAPPROVED)
+  reorderBelowOnly Boolean            @default(false)
+  createdById      Int
+  createdBy        ShopAdmin          @relation("RequisitionCreatedBy", fields: [createdById], references: [id])
+  approvedById     Int?
+  approvedBy       ShopAdmin?         @relation("RequisitionApprovedBy", fields: [approvedById], references: [id])
+  approvedAt       DateTime?
+  remarks          String?
+  totalPPAmount    Float              @default(0)
+  totalMrpAmount   Float              @default(0)
+  avgGpPct         Float              @default(0)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  // Purchase Order stage — populated once the requisition is Approved and
+  // becomes editable as an order; locked in once Final Approved.
+  orderNo            String?
+  deliverToStoreId   Int?
+  deliverToStore     Store?    @relation("OrderDeliverToStore", fields: [deliverToStoreId], references: [id])
+  paymentMode        String?
+  expectedDate       DateTime?
+  finalApprovedById  Int?
+  finalApprovedBy    ShopAdmin? @relation("OrderFinalApprovedBy", fields: [finalApprovedById], references: [id])
+  finalApprovedAt    DateTime?
+
+  items PurchaseRequisitionItem[]
+  grns  Grn[]
+
+  @@unique([shopId, requisitionNo])
+  @@unique([shopId, orderNo])
+  @@index([shopId, createdAt])
+}
+
+model PurchaseRequisitionItem {
+  id            Int                  @id @default(autoincrement())
+  requisitionId Int
+  requisition   PurchaseRequisition  @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  productId     Int
+  product       Product              @relation(fields: [productId], references: [id])
+  qtyBox        Float                @default(0)
+  qtyPieces     Int                  @default(0)
+  ppPerPiece    Float
+  mrpPerPiece   Float
+  totalValue    Float
+  gp            Float
+  gpPct         Float
+  remarks       String?
+
+  @@index([requisitionId])
+  @@index([productId])
+}

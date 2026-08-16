@@ -1,0 +1,92 @@
+// =======================================================
+// PLATFORM LEVEL
+// =======================================================
+
+model SuperAdmin {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Shop {
+  id        Int        @id @default(autoincrement())
+  // Super-admin-assigned identifier for finding a shop in the dashboard
+  // search bar — distinct from the URL slug and the internal db id.
+  code      String     @unique
+  name      String
+  slug      String     @unique
+  logoUrl   String?
+  // Sign-off signature images, uploaded by the Super Admin — stamped onto
+  // printed documents (e.g. Purchase Order) that reserve these three
+  // signature slots, in place of a blank line.
+  preparedBySignatureUrl String?
+  reviewedBySignatureUrl String?
+  approvedBySignatureUrl String?
+  // Shop-wide (not per-branch) address/phone, set once by the Super Admin —
+  // used on printed documents (e.g. Purchase Order) that should identify the
+  // pharmacy itself, not whichever store/branch a document happens to relate to.
+  address   String?
+  phone     String?
+  status    ShopStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  admins               ShopAdmin[]
+  stores               Store[]
+  departments          Department[]
+  suppliers            Supplier[]
+  products             Product[]
+  customers            Customer[]
+  sales                Sale[]
+  setting              ShopSetting?
+  customerCounter      CustomerCounter?
+  purchaseRequisitions PurchaseRequisition[]
+  grns                 Grn[]
+  employees            Employee[]
+  employeeSalaries     EmployeeSalary[]
+  vsts                 Vst[]
+  rtvs                 Rtv[]
+  adjOthers            AdjOthers[]
+  expenses             Expense[]
+}
+
+model ShopAdmin {
+  id           Int           @id @default(autoincrement())
+  shopId       Int
+  shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  username     String
+  passwordHash String
+  name         String
+  role         ShopAdminRole @default(ADMIN)
+  // Menu feature keys (matches the shop nav's route ids, e.g. "billing",
+  // "stock-data") this account is allowed to use.
+  permissions  String[]      @default([])
+  status       AdminStatus   @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  sales                 Sale[]
+  requisitionsCreated   PurchaseRequisition[] @relation("RequisitionCreatedBy")
+  requisitionsApproved  PurchaseRequisition[] @relation("RequisitionApprovedBy")
+  ordersFinalApproved   PurchaseRequisition[] @relation("OrderFinalApprovedBy")
+  grnsReceived          Grn[] @relation("GrnReceivedBy")
+  grnsCreated           Grn[] @relation("GrnCreatedBy")
+  grnsApproved          Grn[] @relation("GrnApprovedBy")
+  saleItemCancellations SaleItemCancellation[]
+  vstsCreated           Vst[] @relation("VstCreatedBy")
+  vstsApproved          Vst[] @relation("VstApprovedBy")
+  rtvsCreated           Rtv[] @relation("RtvCreatedBy")
+  rtvsApproved          Rtv[] @relation("RtvApprovedBy")
+  adjOthersCreated      AdjOthers[] @relation("AdjOthersCreatedBy")
+  adjOthersApproved     AdjOthers[] @relation("AdjOthersApprovedBy")
+  expensesCreated       Expense[] @relation("ExpenseCreatedBy")
+
+  @@unique([shopId, username])
+}
+
+enum ShopAdminRole {
+  ADMIN
+  STAFF
+}

@@ -1,0 +1,74 @@
+// =======================================================
+// SHOP LEVEL — CATALOG (~20k rows per shop)
+// =======================================================
+
+model Product {
+  id                     Int             @id @default(autoincrement())
+  shopId                 Int
+  shop                   Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name                   String
+  genericName            String
+  departmentId           Int
+  department             Department      @relation(fields: [departmentId], references: [id])
+  subDepartmentId        Int?
+  subDepartment          SubDepartment?  @relation(fields: [subDepartmentId], references: [id])
+  defaultSupplierId      Int?
+  defaultSupplier        Supplier?       @relation(fields: [defaultSupplierId], references: [id])
+  displayCategory        String?
+  unit                   String          @default("Pcs")
+  isPrescriptionRequired Boolean         @default(false)
+  controlledClass        ControlledClass @default(NONE)
+  externalCode           String?
+  boxQty                 Int             @default(1)
+  reorderLevel           Int             @default(0)
+  // "Dosage" in the Stock Data filters — the item's form (CAP, TAB, SYP, ...),
+  // sourced from the import file's ITEM TYPE NAME column.
+  dosageForm             String?
+  // Historical snapshot from the source import ("PUR REQ. DATE" / "INVOICE
+  // DATE" columns). lastSoldSnapshot is a fallback only — Stock Data prefers
+  // the live max(Sale.createdAt) for products actually sold through this app.
+  lastPurchaseReqDate    DateTime?
+  lastSoldSnapshot       DateTime?
+  createdAt              DateTime        @default(now())
+
+  batches          Batch[]
+  saleItems        SaleItem[]
+  requisitionItems PurchaseRequisitionItem[]
+  grnItems         GrnItem[]
+  vstItems         VstItem[]
+  rtvItems         RtvItem[]
+
+  @@unique([shopId, externalCode])
+  @@index([shopId, name])
+  @@index([shopId, genericName])
+  @@index([shopId, dosageForm])
+  @@index([shopId, departmentId])
+  @@index([shopId, defaultSupplierId])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([genericName(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([externalCode(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+model Batch {
+  id             Int      @id @default(autoincrement())
+  productId      Int
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storeId        Int
+  store          Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  batchNo        String
+  barcode        String?
+  expiryDate     DateTime
+  mrp            Float
+  purchasePrice  Float
+  sellingPrice   Float
+  vatPct         Float    @default(0)
+  discPct        Float    @default(0)
+  stockQty       Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  saleItems SaleItem[]
+
+  @@unique([productId, storeId, batchNo])
+  @@index([storeId])
+  @@index([barcode])
+}

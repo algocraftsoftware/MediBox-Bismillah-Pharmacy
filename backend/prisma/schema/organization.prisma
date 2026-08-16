@@ -1,0 +1,68 @@
+// =======================================================
+// SHOP LEVEL — ORGANIZATION
+// =======================================================
+
+model Store {
+  id        Int      @id @default(autoincrement())
+  shopId    Int
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name      String
+  code      String
+  address   String?
+  phone     String?
+  createdAt DateTime @default(now())
+
+  batches         Batch[]
+  customers       Customer[]
+  sales           Sale[]
+  invoiceCounter  InvoiceCounter?
+  requisitions    PurchaseRequisition[] @relation("RequisitionStore")
+  ordersDeliveredTo PurchaseRequisition[] @relation("OrderDeliverToStore")
+  grns            Grn[]
+  vsts            Vst[]
+  rtvs            Rtv[]
+  adjOthers       AdjOthers[]
+
+  @@unique([shopId, code])
+}
+
+model Department {
+  id     Int    @id @default(autoincrement())
+  shopId Int
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name   String
+
+  subDepartments SubDepartment[]
+  products       Product[]
+
+  @@unique([shopId, name])
+}
+
+model SubDepartment {
+  id           Int        @id @default(autoincrement())
+  departmentId Int
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  name         String
+
+  products Product[]
+
+  @@unique([departmentId, name])
+}
+
+model Supplier {
+  id      Int    @id @default(autoincrement())
+  shopId  Int
+  shop    Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name    String
+  contact String?
+  address String?
+
+  products     Product[]
+  requisitions PurchaseRequisition[]
+  grns         Grn[]
+  vsts         Vst[]
+  rtvs         Rtv[]
+  adjOthers    AdjOthers[]
+
+  @@unique([shopId, name])
+}

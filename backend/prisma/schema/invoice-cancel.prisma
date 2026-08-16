@@ -1,0 +1,36 @@
+// =======================================================
+// INVOICE ITEM CANCEL — a ledger of partial/full line-item
+// cancellations against a Sale, since SaleItem rows aren't
+// mutated in place (auditable, and reason/amounts survive
+// repeat cancellations on the same line).
+// =======================================================
+
+model SaleItemCancellation {
+  id           Int       @id @default(autoincrement())
+  saleItemId   Int
+  saleItem     SaleItem  @relation(fields: [saleItemId], references: [id], onDelete: Cascade)
+  saleId       Int
+  sale         Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  qty          Int
+  grossAmt     Float
+  vatAmt       Float
+  discAmt      Float
+  netAmt       Float
+  refundAmt    Float
+  reason       String
+  canceledById Int
+  canceledBy   ShopAdmin @relation(fields: [canceledById], references: [id])
+  canceledAt   DateTime  @default(now())
+
+  @@index([saleId])
+  @@index([saleItemId])
+}
+
+model ShopSetting {
+  shopId           Int    @id
+  shop             Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  currency         String @default("৳")
+  vatRate          Float  @default(0)
+  invoiceFooter    String @default("Thank you for your purchase!")
+  rewardEarnRatePct Float @default(0)
+}

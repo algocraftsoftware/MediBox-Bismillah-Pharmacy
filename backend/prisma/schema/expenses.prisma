@@ -1,0 +1,16 @@
+// =======================================================
+// SHOP LEVEL — EXPENSES
+// =======================================================
+
+model Expense {
+  id          Int       @id @default(autoincrement())
+  shopId      Int
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name        String
+  amount      Float
+  createdById Int
+  createdBy   ShopAdmin @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+
+  @@index([shopId, createdAt])
+}

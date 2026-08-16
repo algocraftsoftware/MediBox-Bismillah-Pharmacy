@@ -1,0 +1,62 @@
+// =======================================================
+// ADJUSTMENT WITH OTHERS — a lightweight credit against one
+// or more RTVs with no PO/items/stock movement at all (unlike
+// Adjust With PO, which is a real GRN receiving replacement
+// stock). Just records how much of each RTV's value is being
+// treated as a straight cash-equivalent adjustment.
+// =======================================================
+
+enum AdjOthersType {
+  SUPPLIER
+  OTHERS
+}
+
+enum AdjStatus {
+  UNAPPROVED
+  APPROVED
+}
+
+model AdjOthersCounter {
+  shopId Int @id
+  value  Int @default(0)
+}
+
+model AdjOthers {
+  id                    Int            @id @default(autoincrement())
+  shopId                Int
+  shop                  Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  storeId               Int
+  store                 Store          @relation(fields: [storeId], references: [id])
+  supplierId            Int
+  supplier              Supplier       @relation(fields: [supplierId], references: [id])
+  adjType               AdjOthersType  @default(SUPPLIER)
+  via                   RtvVia         @default(WAREHOUSE)
+  txnNo                 String
+  remarks               String?
+  totalAdjustmentAmount Float          @default(0)
+  status                AdjStatus      @default(UNAPPROVED)
+  createdById           Int
+  createdBy             ShopAdmin      @relation("AdjOthersCreatedBy", fields: [createdById], references: [id])
+  approvedById          Int?
+  approvedBy            ShopAdmin?     @relation("AdjOthersApprovedBy", fields: [approvedById], references: [id])
+  approvedAt            DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  items AdjOthersItem[]
+
+  @@unique([shopId, txnNo])
+  @@index([shopId, createdAt])
+}
+
+model AdjOthersItem {
+  id               Int       @id @default(autoincrement())
+  adjOthersId      Int
+  adjOthers        AdjOthers @relation(fields: [adjOthersId], references: [id], onDelete: Cascade)
+  rtvId            Int
+  rtv              Rtv       @relation(fields: [rtvId], references: [id])
+  adjustmentAmount Float
+
+  @@index([adjOthersId])
+  @@index([rtvId])
+}

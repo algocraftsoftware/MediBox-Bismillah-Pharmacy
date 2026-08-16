@@ -1,0 +1,53 @@
+// =======================================================
+// SHOP LEVEL — CUSTOMERS
+// =======================================================
+
+model Customer {
+  id            Int          @id @default(autoincrement())
+  shopId        Int
+  shop          Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerCode  String
+  storeId       Int
+  store         Store        @relation(fields: [storeId], references: [id])
+  custType      CustomerType @default(GENERAL)
+  name          String
+  mobile        String
+  address       String?
+  gender        Gender?
+  birthDate     DateTime?
+  marriageDate  DateTime?
+  email         String?
+  nid           String?
+  passport      String?
+  orgName       String?
+  designation   String?
+  employeeId    String?
+  doctorName    String?
+  doctorAddress String?
+  rewardBalance Float        @default(0)
+  creditLimit   Float        @default(0)
+  creditBalance Float        @default(0)
+  createdAt     DateTime     @default(now())
+
+  sales Sale[]
+
+  @@unique([shopId, customerCode])
+  @@index([shopId, mobile])
+  @@index([shopId, orgName])
+  @@index([shopId, custType])
+  @@index([shopId, employeeId])
+  @@index([mobile(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([customerCode(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+model CustomerCounter {
+  shopId Int  @id
+  shop   Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  value  Int  @default(0)
+}
+
+model InvoiceCounter {
+  storeId Int   @id
+  store   Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  value   Int   @default(0)
+}

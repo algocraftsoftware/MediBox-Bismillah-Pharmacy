@@ -1,0 +1,61 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions", "prismaSchemaFolder"]
+  binaryTargets   = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm]
+}
+
+enum ShopStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum AdminStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CustomerType {
+  GENERAL
+  EMPLOYEE
+  OTHER
+  // Only VVIP customers may be given a credit limit / take products on due.
+  VVIP
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum ControlledClass {
+  NONE
+  ANTIBIOTIC
+  SEDATIVE_CNS
+}
+
+enum Shift {
+  MORNING
+  EVENING
+}
+
+enum DeliveryMode {
+  PICKUP
+  DELIVERY
+}
+
+enum PaymentStatus {
+  PAID
+  DUE
+}
+
+enum SalaryStatus {
+  PAID
+  UNPAID
+}

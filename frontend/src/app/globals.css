@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@layer base {
+  /* Uppercase everything: every label, button, cell and input on the site
+     renders in CAPITAL LETTERS regardless of how the data was entered. */
+  *,
+  *::before,
+  *::after {
+    text-transform: uppercase;
+  }
+  /* text-transform does not always reach placeholders — force it here too */
+  input::placeholder,
+  textarea::placeholder {
+    text-transform: uppercase;
+  }
+  html {
+    /* Scales up EVERY text and element across the entire app so all text is even bigger and clearer */
+    font-size: 19px;
+  }
+  body {
+    @apply bg-[#f8fafc] text-slate-900 antialiased font-semibold;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  /* Ensure form controls and tables render with bold, larger readable typography */
+  input,
+  select,
+  textarea,
+  button {
+    @apply font-bold;
+  }
+  th {
+    @apply font-black tracking-wide text-slate-900;
+  }
+  td {
+    @apply font-bold text-slate-900;
+  }
+  label {
+    @apply font-extrabold text-slate-800;
+  }
+}
+
+/* Remove the up/down stepper spinners from every numeric input site-wide —
+   this app only ever wants direct typing, never mouse-wheel/spinner entry. */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Custom slick scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.6);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.8);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(5, 150, 105, 0.5);
+}
+
+/* Print thermal bill specific styles */
+@page {
+  /* Standard thermal receipt roll width — without this the browser defaults
+     to a full Letter/A4 page, which is most of why a printed bill came out
+     far larger than an actual receipt printer produces. */
+  size: 80mm auto;
+  margin: 0;
+}
+@media print {
+  /* The site-wide 19px root scale-up (for on-screen readability) has no
+     business inflating a physical receipt — reset it back to normal for print. */
+  html {
+    font-size: 16px;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt,
+  #printable-receipt * {
+    visibility: visible;
+  }
+  #printable-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 76mm;
+    margin: 0;
+    padding: 4px;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+}
