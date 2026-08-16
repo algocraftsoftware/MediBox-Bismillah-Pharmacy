@@ -115,10 +115,10 @@ The repo deploys as **two separate Vercel projects**, one per folder (set each p
   Required environment variables (set in the backend Vercel project's Settings → Environment Variables):
   - `DATABASE_URL` — same Neon connection string as local dev
   - `JWT_SECRET` — a long random string (**use a different value than local dev** for a real production deployment)
-  - `CORS_ORIGIN` — the frontend's deployed URL, e.g. `https://medi-box-two.vercel.app`
+  - `CORS_ORIGIN` — the frontend's deployed URL, e.g. `https://www.medibox-bismillah-pharmacy.com`
   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — required for shop logo uploads; without them logos fall back to base64 data URIs
 
-- **Frontend** (`frontend/`): a normal Next.js deploy. `frontend/.env.production` bakes in `NEXT_PUBLIC_API_BASE_URL=https://medi-box-8jqj.vercel.app/api` as the default (this is committed — `NEXT_PUBLIC_*` vars are exposed to the browser anyway, so it isn't a secret). If the backend's URL ever changes, either edit that file or override it with a `NEXT_PUBLIC_API_BASE_URL` env var in the frontend Vercel project's settings (dashboard-set env vars take precedence over `.env.production`).
+- **Frontend** (`frontend/`): a normal Next.js deploy. `frontend/.env.production` bakes in `NEXT_PUBLIC_API_BASE_URL=https://medi-box-bismillah-pharmacy-backend.vercel.app/api` as the default (this is committed — `NEXT_PUBLIC_*` vars are exposed to the browser anyway, so it isn't a secret). If the backend's URL ever changes, either edit that file or override it with a `NEXT_PUBLIC_API_BASE_URL` env var in the frontend Vercel project's settings (dashboard-set env vars take precedence over `.env.production`).
 
 Shop logos are uploaded to **Cloudinary** (folder `medibox/shop-logos`) and stored by URL. If Cloudinary isn't configured, logos fall back to base64 data URIs in the database — both avoid writing to disk since Vercel's serverless filesystem is read-only outside of `/tmp`. CSV imports already used in-memory parsing and needed no change.
 
