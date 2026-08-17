@@ -11,7 +11,14 @@ export interface SettingsAccount {
 
 export function coreApi(base: string, token: string) {
   return {
-    me: () => request<{ admin: { id: number; name: string; username: string }; shop: any }>(`${base}/me`, token),
+    // `role` and `permissions` are the account's CURRENT values straight from
+    // the DB — the session loader refreshes the menu from these, so a Super
+    // Admin's permission edit takes effect without the user logging out.
+    me: () =>
+      request<{
+        admin: { id: number; name: string; username: string; role: ShopAdminRole; permissions: string[] };
+        shop: any;
+      }>(`${base}/me`, token),
 
     getStores: () => request<Store[]>(`${base}/stores`, token),
 

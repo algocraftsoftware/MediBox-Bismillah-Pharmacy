@@ -84,7 +84,19 @@ export async function requireShopAdmin(req: Request, res: Response, next: NextFu
     if (payload.role !== 'SHOP_ADMIN' || payload.shopId !== shop.id) {
       return res.status(403).json({ error: 'Access denied for this shop' });
     }
-    req.auth = payload;
+
+    // Feature access is re-read from the account row on every request rather
+    // than trusted from the token. The token is signed at login and lives for
+    // 12h, so a Super Admin revoking a feature would otherwise not take effect
+    // until the user happened to log in again — the API would keep serving a
+    // feature the menu had already stopped showing.
+    const account = await prisma.shopAdmin.findFirst({
+      where: { id: payload.sub, shopId: shop.id },
+      select: { permissions: true, role: true },
+    });
+    if (!account) return res.status(403).json({ error: 'Account not found for this shop' });
+
+    req.auth = { ...payload, permissions: account.permissions, adminRole: account.role };
     req.shop = {
       id: shop.id,
       slug: shop.slug,
@@ -103,24 +115,24 @@ export async function requireShopAdmin(req: Request, res: Response, next: NextFu
 }
 
 // Gate a feature area behind the account's granted permissions. Must run
-// after requireShopAdmin (needs req.auth populated). Accepts multiple feature
-// ids when an endpoint is shared by more than one menu page (e.g. customer
-// lookup is used by both Billing and Customer Registration) — any one match
-// is sufficient. A missing permissions array (shouldn't happen post-migration,
-// but defensively) denies access. `ADMIN` role always has full access,
-// regardless of its stored permissions array — mirrors the frontend's own
-// route-gate bypass (`adminRole === "ADMIN"` in layout.tsx) and the intent
-// baked into DEFAULT_ADMIN_PERMISSIONS at account-creation time; this also
-// means a brand-new feature (e.g. Expenses) works for existing ADMIN accounts
-// immediately, without needing a DB backfill or a superadmin checklist edit.
+// after requireShopAdmin (which populates req.auth with the account's CURRENT
+// permissions, read fresh from the DB). Accepts multiple feature ids when an
+// endpoint is shared by more than one menu page (e.g. customer lookup is used
+// by both Billing and Customer Registration) — any one match is sufficient. A
+// missing permissions array denies access.
+//
+// The granted list applies to `ADMIN` accounts as well. There used to be a
+// blanket ADMIN bypass here, which made restricting an admin's features from
+// the Super Admin dashboard have no effect at all. The cost of enforcing it:
+// an account predating a feature won't have that id stored, so a newly shipped
+// feature must be ticked for it once — new shops still get everything by
+// default via DEFAULT_ADMIN_PERMISSIONS. Settings stays role-gated separately
+// (requireAdminRole below) and is unaffected.
 export function requirePermission(...featureIds: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const auth = req.auth;
     if (!auth || auth.role !== 'SHOP_ADMIN') {
       return res.status(403).json({ error: 'Access denied' });
-    }
-    if (auth.adminRole === 'ADMIN') {
-      return next();
     }
     if (!featureIds.some((id) => auth.permissions?.includes(id))) {
       return res.status(403).json({ error: `This account does not have access to "${featureIds.join('" or "')}"` });

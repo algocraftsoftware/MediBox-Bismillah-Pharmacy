@@ -8,9 +8,20 @@ import { Spinner } from "../components/Spinner";
 import { ShopAdminRole, Store } from "../types";
 import { store } from "../store/store";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { shopSessionLoaded, shopSessionReset, shopSessionRetrying, shopSessionStoreSelected } from "../store/shopSessionSlice";
+import {
+  shopSessionAccountRefreshed,
+  shopSessionLoaded,
+  shopSessionReset,
+  shopSessionRetrying,
+  shopSessionStoreSelected,
+} from "../store/shopSessionSlice";
 
 const MAX_SESSION_LOAD_ATTEMPTS = 4;
+
+// How often an open tab re-checks its own feature access. Short enough that a
+// permission change lands on its own without the user doing anything, long
+// enough to be a rounding error against normal app traffic.
+const ACCOUNT_REFRESH_MS = 30_000;
 
 interface ShopSessionValue {
   token: string;
@@ -60,6 +71,11 @@ function ShopSessionLoader({ children }: { children: React.ReactNode }) {
   const params = useParams<{ shopSlug: string }>();
   const dispatch = useAppDispatch();
   const { ready, retrying, value } = useAppSelector((state) => state.shopSession);
+  // Read as individual fields so the background refresh effect below only
+  // restarts when the identity it closes over actually changes, not on every
+  // unrelated session update (e.g. picking a different store).
+  const sessionShopSlug = value?.shopSlug;
+  const sessionToken = value?.token;
 
   // Runs exactly once per mount — reproduces useState's "always starts
   // fresh" default, since (unlike component state) the Redux store outlives
@@ -98,7 +114,17 @@ function ShopSessionLoader({ children }: { children: React.ReactNode }) {
           const shopAddress = me.shop?.address ?? null;
           const shopPhone = me.shop?.phone ?? null;
           const adminName = me.admin?.name ?? sess.admin.name;
-          session.setShopAdmin({ ...sess, shop: { ...sess.shop, name: shopName, logoUrl } });
+          // Feature access is read from the DB on every load, never from the
+          // stored session: a Super Admin can grant or revoke features after
+          // this account logged in, and the menu has to follow that instead of
+          // whatever was true at login. Same for the role.
+          const adminRole = me.admin?.role ?? sess.admin.role;
+          const permissions = me.admin?.permissions ?? sess.admin.permissions;
+          session.setShopAdmin({
+            ...sess,
+            admin: { ...sess.admin, name: adminName, role: adminRole, permissions },
+            shop: { ...sess.shop, name: shopName, logoUrl },
+          });
           dispatch(
             shopSessionLoaded({
               token: sess.token,
@@ -111,8 +137,8 @@ function ShopSessionLoader({ children }: { children: React.ReactNode }) {
               shopAddress,
               shopPhone,
               adminName,
-              adminRole: sess.admin.role,
-              permissions: sess.admin.permissions,
+              adminRole,
+              permissions,
               stores,
               selectedStoreId: stores[0]?.id ?? null,
             })
@@ -145,6 +171,70 @@ function ShopSessionLoader({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, [params.shopSlug, router, dispatch]);
+
+  // Keeps the menu honest while the app is already open. The session loads once
+  // per mount, and moving between pages doesn't remount this provider (it lives
+  // in the layout), so without this a permission change would only show up
+  // after a full reload or a re-login. Re-checks on a timer and whenever the tab
+  // regains focus — the realistic case being a Super Admin editing access in
+  // another tab/machine while the shop user sits on a page.
+  useEffect(() => {
+    if (!ready || !sessionShopSlug || !sessionToken) return;
+    let cancelled = false;
+    const api = shopApi(sessionShopSlug, sessionToken);
+
+    const refresh = () => {
+      api
+        .me()
+        .then((me) => {
+          if (cancelled || !me.admin) return;
+          const stored = session.getShopAdmin();
+          if (stored) {
+            session.setShopAdmin({
+              ...stored,
+              admin: {
+                ...stored.admin,
+                name: me.admin.name,
+                role: me.admin.role,
+                permissions: me.admin.permissions ?? [],
+              },
+            });
+          }
+          dispatch(
+            shopSessionAccountRefreshed({
+              permissions: me.admin.permissions ?? [],
+              adminRole: me.admin.role,
+              adminName: me.admin.name,
+            })
+          );
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          // The account was deactivated or the shop suspended out from under
+          // this session — that can't recover, so send them to login. Anything
+          // else (offline, backend blip) is ignored: the next tick retries.
+          if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+            session.clearShopAdmin();
+            router.replace(`/${params.shopSlug}/login`);
+          }
+        });
+    };
+
+    const onFocus = () => refresh();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    const timer = setInterval(refresh, ACCOUNT_REFRESH_MS);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      clearInterval(timer);
+    };
+  }, [ready, sessionShopSlug, sessionToken, dispatch, router, params.shopSlug]);
 
   if (!ready || !value) {
     return (

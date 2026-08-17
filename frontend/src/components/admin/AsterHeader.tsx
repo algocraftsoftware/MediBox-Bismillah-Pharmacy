@@ -13,7 +13,8 @@ interface AsterHeaderProps {
   shopName: string;
   logoUrl: string | null;
   adminName: string;
-  adminRole: string;
+  // No adminRole here on purpose: which menu items show is decided purely by
+  // `permissions`, so the role can't quietly re-open a restricted feature.
   permissions: string[];
   stores: Store[];
   selectedStoreId: number | null;
@@ -38,7 +39,6 @@ export const AsterHeader: React.FC<AsterHeaderProps> = ({
   shopName,
   logoUrl,
   adminName,
-  adminRole,
   permissions,
   stores,
   selectedStoreId,
@@ -53,11 +53,15 @@ export const AsterHeader: React.FC<AsterHeaderProps> = ({
   // auto-flowing grid (4 per column) so a Super Admin granting fewer
   // features just closes the gap and reflows, instead of leaving a fixed
   // column short or any blank space.
-  // ADMIN role always sees every item, regardless of its stored permissions
-  // array (matches the backend's requirePermission ADMIN bypass) — so a
-  // brand-new feature is immediately visible to existing admin accounts.
-  const visibleItems =
-    adminRole === "ADMIN" ? MENU_FEATURES : MENU_FEATURES.filter((item) => permissions.includes(item.id));
+  //
+  // The granted list is honoured for ADMIN accounts too. This used to be
+  // bypassed for role ADMIN, which meant restricting an admin's features in the
+  // Super Admin dashboard changed nothing here — the menu still showed
+  // everything. The trade-off of enforcing it: an account created before a
+  // feature existed doesn't have that id in its list, so a newly shipped
+  // feature has to be ticked for it once (new shops get everything by default
+  // via DEFAULT_ADMIN_PERMISSIONS).
+  const visibleItems = MENU_FEATURES.filter((item) => permissions.includes(item.id));
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

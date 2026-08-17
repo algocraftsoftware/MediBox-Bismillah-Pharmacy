@@ -55,10 +55,28 @@ const shopSessionSlice = createSlice({
     shopSessionStoreSelected(state, action: PayloadAction<number>) {
       if (state.value) state.value.selectedStoreId = action.payload;
     },
+    // Re-checked account state from GET /me while the app is already open, so a
+    // Super Admin granting or revoking a feature reaches the menu on its own.
+    // Only these three fields are touched — the selected store, stores list and
+    // shop details stay exactly as they are.
+    shopSessionAccountRefreshed(
+      state,
+      action: PayloadAction<{ permissions: string[]; adminRole: ShopAdminRole; adminName: string }>
+    ) {
+      if (!state.value) return;
+      state.value.permissions = action.payload.permissions;
+      state.value.adminRole = action.payload.adminRole;
+      state.value.adminName = action.payload.adminName;
+    },
   },
 });
 
-export const { shopSessionReset, shopSessionLoaded, shopSessionRetrying, shopSessionStoreSelected } =
-  shopSessionSlice.actions;
+export const {
+  shopSessionReset,
+  shopSessionLoaded,
+  shopSessionRetrying,
+  shopSessionStoreSelected,
+  shopSessionAccountRefreshed,
+} = shopSessionSlice.actions;
 
 export default shopSessionSlice.reducer;

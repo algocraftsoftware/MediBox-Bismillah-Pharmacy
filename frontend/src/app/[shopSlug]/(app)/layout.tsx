@@ -14,10 +14,13 @@ function Shell({ children }: { children: React.ReactNode }) {
   // checklist at all (see DashboardTabBar) — it's Admin-only with no
   // override, so it gets its own hard gate here instead of going through
   // the generic "not a known feature -> open by default" fallback below.
+  // A known feature is open only when it's been granted — for ADMIN accounts
+  // too, so a feature the Super Admin restricted is actually unreachable and
+  // not just hidden from the menu (typing its URL lands on Access Restricted).
   const hasAccess =
     activeRoute === "settings"
       ? session.adminRole === "ADMIN"
-      : !ALL_FEATURE_IDS.includes(activeRoute) || session.permissions.includes(activeRoute) || session.adminRole === "ADMIN";
+      : !ALL_FEATURE_IDS.includes(activeRoute) || session.permissions.includes(activeRoute);
 
   return (
     <div className="flex flex-col h-screen bg-[#f8fafc] text-slate-900 font-sans overflow-hidden">
@@ -27,7 +30,6 @@ function Shell({ children }: { children: React.ReactNode }) {
         shopName={session.shopName}
         logoUrl={session.logoUrl}
         adminName={session.adminName}
-        adminRole={session.adminRole}
         permissions={session.permissions}
         stores={session.stores}
         selectedStoreId={session.selectedStoreId}

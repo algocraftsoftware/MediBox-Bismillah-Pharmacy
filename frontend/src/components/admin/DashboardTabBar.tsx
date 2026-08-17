@@ -25,11 +25,10 @@ export const DashboardTabBar: React.FC<{
 }> = ({ activeRoute, collectionTab, onCollectionTabChange }) => {
   const router = useRouter();
   const { shopSlug, permissions, adminRole } = useShopSession();
-  // ADMIN role always sees every dashboard button, regardless of its stored
-  // permissions array (matches AsterHeader's MENU grid and the backend's
-  // requirePermission ADMIN bypass).
-  const visibleDashboardButtons =
-    adminRole === "ADMIN" ? DASHBOARD_FEATURES : DASHBOARD_FEATURES.filter((f) => permissions.includes(f.id));
+  // Granted features decide these buttons for every role, ADMIN included —
+  // matches AsterHeader's MENU grid so a restricted feature disappears from
+  // both places at once.
+  const visibleDashboardButtons = DASHBOARD_FEATURES.filter((f) => permissions.includes(f.id));
 
   const goCollection = (targetTab: "collection" | "due") => {
     if (activeRoute === "dashboard" && onCollectionTabChange) {
