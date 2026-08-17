@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { shopApi, ApiError } from "../../../services/api";
 import { PurchaseOrderOption, Supplier } from "../../../types";
 import { Spinner } from "../../../components/Spinner";
-import { fmt, fmt4 } from "../../../lib/format";
+import { fmt, fmt4, round4 } from "../../../lib/format";
 import { ComboSelect as SearchableSelect, ComboOption } from "../ComboSelect";
 import { GrnItemDraft, PAYMENT_TYPES } from "./types";
 import { splitProportionally } from "../../../lib/proportionalSplit";
@@ -96,6 +96,10 @@ export const NewView: React.FC<{
             rcvQtyPieces: it.rcvQtyPieces,
             bonusQtyPieces: it.bonusQtyPieces,
             tradePrice: it.tradePrice,
+            // Seeded from the PO's own pricing; both boxes are editable from
+            // here so an invoice that differs from the order can be keyed in.
+            totalValue: it.totalValue,
+            unitPrice: it.rcvQtyPieces > 0 ? round4(it.totalValue / it.rcvQtyPieces) : it.tradePrice,
             vatAmt: it.vatAmt,
             discAmt: it.discAmt,
             mrp: it.mrp,
@@ -110,6 +114,32 @@ export const NewView: React.FC<{
 
   const setItem = (productId: number, patch: Partial<GrnItemDraft>) => {
     setItems((prev) => prev.map((it) => (it.productId === productId ? { ...it, ...patch } : it)));
+  };
+
+  // === Price entry: Total Value and Unit Price are two views of one figure ===
+  // Editing either recomputes the other against the received quantity, and
+  // changing the received quantity keeps the unit price and rescales the total.
+  // Only the field the user typed is stored verbatim; the partner is rounded,
+  // so typing 100 into Total Value against 3 pieces keeps 100 exactly and shows
+  // 33.3333 as the unit price rather than 33.33333333333336.
+  const setUnitPrice = (it: GrnItemDraft, value: number) => {
+    const unitPrice = Math.max(0, value);
+    setItem(it.productId, { unitPrice, totalValue: round4(unitPrice * it.rcvQtyPieces) });
+  };
+
+  const setTotalValue = (it: GrnItemDraft, value: number) => {
+    const totalValue = Math.max(0, value);
+    setItem(it.productId, {
+      totalValue,
+      // With nothing received there's no per-unit price to derive; keep the one
+      // already in the box so it isn't wiped while the row is still being filled in.
+      unitPrice: it.rcvQtyPieces > 0 ? round4(totalValue / it.rcvQtyPieces) : it.unitPrice,
+    });
+  };
+
+  const setReceivedPieces = (it: GrnItemDraft, value: number) => {
+    const rcvQtyPieces = Math.max(0, value);
+    setItem(it.productId, { rcvQtyPieces, totalValue: round4(it.unitPrice * rcvQtyPieces) });
   };
 
   const removeItem = (productId: number) => {
@@ -128,10 +158,13 @@ export const NewView: React.FC<{
       // pricing is based on rcvQtyPieces alone (mirrors the backend's
       // computeItem() with bonusAffectsPricing: false, and matches how GRN
       // Without PO already treats bonus).
-      const pricedQtyPieces = it.rcvQtyPieces;
-      const totalValue = it.tradePrice * pricedQtyPieces;
+      //
+      // Total Value is now typed in (or derived from a typed Unit Price)
+      // instead of being recomputed from the PO price, so an invoice that
+      // came in at a different rate is entered as-is.
+      const totalValue = it.totalValue;
       const netTotal = totalValue + it.vatAmt - it.discAmt;
-      const unitPrice = pricedQtyPieces > 0 ? netTotal / pricedQtyPieces : it.tradePrice;
+      const unitPrice = it.unitPrice;
       const gp = it.mrp - unitPrice;
       const gpPct = it.mrp > 0 ? (gp / it.mrp) * 100 : 0;
       return { ...it, totalQtyPieces, totalValue, netTotal, unitPrice, gp, gpPct };
@@ -150,7 +183,10 @@ export const NewView: React.FC<{
   const applyCalculate = (discount: number, vat: number) => {
     setItems((prev) => {
       if (prev.length === 0) return prev;
-      const weights = prev.map((it) => it.tradePrice * it.rcvQtyPieces);
+      // Weighted by what each line was actually invoiced at, not by the PO's
+      // price — otherwise an edited line would take a share of the invoice
+      // discount/VAT sized against a price that is no longer on the document.
+      const weights = prev.map((it) => it.totalValue);
       const discAmts = splitProportionally(discount, weights);
       const vatAmts = splitProportionally(vat, weights);
       return prev.map((it, idx) => ({ ...it, discAmt: discAmts[idx], vatAmt: vatAmts[idx] }));
@@ -183,6 +219,9 @@ export const NewView: React.FC<{
           rcvQtyPieces: it.rcvQtyPieces,
           bonusQtyBox: 0,
           bonusQtyPieces: it.bonusQtyPieces,
+          // Sent so the typed price sticks: the backend takes this as
+          // totalValueOverride instead of recomputing PO price x qty.
+          totalValue: it.totalValue,
           vatAmt: it.vatAmt,
           discAmt: it.discAmt,
           mrp: it.mrp,
@@ -384,7 +423,7 @@ export const NewView: React.FC<{
                     type="number"
                     min={0}
                     value={it.rcvQtyPieces || ""}
-                    onChange={(e) => setItem(it.productId, { rcvQtyPieces: Math.max(0, Number(e.target.value) || 0) })}
+                    onChange={(e) => setReceivedPieces(it, Number(e.target.value) || 0)}
                     className="w-14 border border-slate-300 rounded px-1.5 py-1 text-right"
                   />
                 </td>
@@ -399,7 +438,17 @@ export const NewView: React.FC<{
                 </td>
                 <td className="py-4 px-3 border border-slate-200 text-right font-bold text-slate-700 truncate">{it.totalQtyPieces}</td>
                 <td className="py-4 px-3 border border-slate-200 text-right text-slate-600 truncate">{fmt(it.tradePrice)}</td>
-                <td className="py-4 px-3 border border-slate-200 text-right text-slate-600 truncate">{fmt(it.totalValue)}</td>
+                <td className="py-2 px-2 border border-slate-200 truncate">
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={it.totalValue || ""}
+                    onChange={(e) => setTotalValue(it, Number(e.target.value) || 0)}
+                    title="Total Value — editing this recalculates Unit Price as Total Value ÷ RcvQty (Pcs)"
+                    className="w-20 border border-slate-300 rounded px-1.5 py-1 text-right font-bold"
+                  />
+                </td>
                 <td className="py-2 px-2 border border-slate-200 truncate">
                   <input
                     type="number"
@@ -416,7 +465,17 @@ export const NewView: React.FC<{
                     className="w-14 border border-slate-300 rounded px-1.5 py-1 text-right"
                   />
                 </td>
-                <td className="py-4 px-3 border border-slate-200 text-right font-bold text-slate-900 truncate">{fmt(it.unitPrice)}</td>
+                <td className="py-2 px-2 border border-slate-200 truncate">
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={it.unitPrice || ""}
+                    onChange={(e) => setUnitPrice(it, Number(e.target.value) || 0)}
+                    title="Unit Price — editing this recalculates Total Value as Unit Price × RcvQty (Pcs)"
+                    className="w-20 border border-slate-300 rounded px-1.5 py-1 text-right font-bold"
+                  />
+                </td>
                 <td className="py-2 px-2 border border-slate-200 truncate">
                   <input
                     type="number"
