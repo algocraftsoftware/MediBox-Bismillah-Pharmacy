@@ -7,8 +7,15 @@ import { uploadLogoBuffer, uploadSignatureBuffer } from '../cloudinary';
 import { cloneMedicineCatalog } from '../catalogClone';
 import { aggregateCogs } from './dashboardRoutes';
 
+// Permission lists reach this file two different ways: the shop create/update
+// routes are multipart, so their `adminPermissions`/`staffPermissions` fields
+// arrive as a JSON *string*, while the staff routes are plain JSON bodies and
+// arrive as a real array. Handle both — treating an array as a string
+// (`String(["billing"])` -> `"billing"`) throws in JSON.parse and used to fall
+// through to `[]`, silently wiping every feature the Super Admin had ticked.
 function parsePermissions(raw: unknown): string[] {
   if (!raw) return [];
+  if (Array.isArray(raw)) return raw.map(String);
   try {
     const parsed = JSON.parse(String(raw));
     return Array.isArray(parsed) ? parsed.map(String) : [];
