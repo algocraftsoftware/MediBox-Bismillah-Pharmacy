@@ -49,6 +49,47 @@ export interface EditStockUpdate {
   boxQty?: number;
 }
 
+// Create Stock takes the Stock Data columns that are actually data entry —
+// Item No is generated from the catalog's own numbering, and Last Req./Last
+// Sold Date are history that fills itself in from real requisitions and sales.
+// Warehouse comes along because Purchase Price, Sales Price and Stock Qty live
+// on a batch, which belongs to one warehouse.
+export interface CreateStockInput {
+  storeId: number;
+  name: string;
+  genericName?: string;
+  displayCategory?: string;
+  departmentId: number;
+  subDepartmentId?: number | null;
+  supplierId?: number | null;
+  // "Item Type" on the form — the same Product.dosageForm that Stock Data
+  // filters under the name "Dosage".
+  dosageForm?: string;
+  unit?: string;
+  reorderLevel?: number;
+  boxQty?: number;
+  purchasePrice?: number;
+  salesPrice?: number;
+}
+
+export interface CreatedStockRow {
+  productId: number;
+  batchId: number;
+  itemNo: string;
+  itemName: string;
+  genericName: string;
+  displayCategory: string | null;
+  department: string;
+  itemType: string | null;
+  unit: string;
+  reorderLevel: number;
+  boxQty: number;
+  purchasePrice: number;
+  salesPrice: number;
+  // Always 0 — an item created here holds no stock until a GRN receives it.
+  stockQty: number;
+}
+
 export interface EditStockSaveResult {
   ok: boolean;
   rowsUpdated: number;

@@ -32,7 +32,11 @@ export interface CartLine {
   productId: number;
   productName: string;
   genericName: string;
-  departmentName: string;
+  // The product's own Display Category (e.g. "G-08-(14) CNS/BENZODIAZEPINES"),
+  // shown in the cart's Display Category column. Deliberately NOT the
+  // department name — that's a much coarser bucket ("Pharma"/"Non-Pharma"), and
+  // rendering it here is what used to make every line read "PHARMA".
+  displayCategory: string | null;
   supplierName: string | null;
   uom: string;
   vatPct: number;

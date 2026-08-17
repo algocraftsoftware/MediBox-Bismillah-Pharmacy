@@ -221,7 +221,9 @@ export const AsterBillingView: React.FC = () => {
         productId: selectedBatch.productId,
         productName: selectedBatch.productName,
         genericName: selectedBatch.genericName,
-        departmentName: selectedBatch.departmentName,
+        // Carried straight through from the search result, so the cart shows
+        // exactly the category the dropdown showed for the same batch.
+        displayCategory: selectedBatch.displayCategory,
         supplierName: selectedBatch.supplierName,
         uom: selectedBatch.unit,
         vatPct: selectedBatch.vatPct,
@@ -789,7 +791,12 @@ export const AsterBillingView: React.FC = () => {
               {cart.map((item) => (
                 <tr key={item.batchId} className="odd:bg-white even:bg-slate-50 hover:bg-emerald-50/50 transition-colors">
                   <td className="py-4 px-3 border border-slate-200 font-extrabold text-slate-900 truncate">{item.productName}</td>
-                  <td className="py-4 px-2.5 border border-slate-200 text-slate-700 truncate">{item.departmentName}</td>
+                  <td
+                    className="py-4 px-2.5 border border-slate-200 text-slate-700 truncate"
+                    title={item.displayCategory || undefined}
+                  >
+                    {item.displayCategory || "—"}
+                  </td>
                   <td className="py-4 px-2.5 border border-slate-200 text-slate-700 truncate max-w-[140px]">{item.supplierName || "—"}</td>
                   <td className="py-4 px-2.5 border border-slate-200 truncate">{item.uom}</td>
                   <td className="py-4 px-2.5 border border-slate-200 text-right truncate">{lineVatAmt(item).toFixed(2)}</td>

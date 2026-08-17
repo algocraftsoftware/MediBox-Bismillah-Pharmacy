@@ -27,6 +27,7 @@ export const MENU_FEATURES: { id: string; label: string }[] = [
   // order above keeps matching it. Edit Stock leads this group: it's the one
   // built feature here, and the four below it are still Coming Soon screens.
   { id: "edit-stock", label: "Edit Stock" },
+  { id: "create-stock", label: "Create Stock" },
   { id: "internal-issue", label: "Internal Issue" },
   { id: "internal-receive", label: "Internal Receive" },
   { id: "internal-requisition", label: "Internal Requisition" },

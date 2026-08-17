@@ -12,6 +12,7 @@ import { adjOthersApi } from "./shopApi/adjOthers";
 import { adjWithPoApi } from "./shopApi/adjWithPo";
 import { billingApi } from "./shopApi/billing";
 import { coreApi } from "./shopApi/core";
+import { createStockApi } from "./shopApi/createStock";
 import { customerApi } from "./shopApi/customer";
 import { dashboardApi } from "./shopApi/dashboard";
 import { editStockApi } from "./shopApi/editStock";
@@ -249,6 +250,7 @@ export function shopApi(slug: string, token: string) {
     ...coreApi(base, token),
     ...stockDataApi(base, token),
     ...editStockApi(base, token),
+    ...createStockApi(base, token),
     ...expireProductsApi(base, token),
     ...soldProductLedgerApi(base, token),
     ...customerApi(base, token),

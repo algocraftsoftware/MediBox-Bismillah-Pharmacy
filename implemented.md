@@ -96,6 +96,28 @@ Models: `Product`, `Batch`.
 
 ---
 
+## Create Stock
+
+Hand-enters a new catalog item using the Stock Data columns that are actually data entry. **Frontend**: `AsterCreateStockView.tsx`. **Backend**: `stockDataRoutes.ts` CREATE STOCK section.
+
+- `GET /create-stock/next-item-no` — preview of the code the next item will get.
+- `POST /create-stock` — creates the `Product` plus one opening `Batch`, in a transaction.
+- `GET /products/display-categories` — distinct values already in use, offered as a picklist so a typo can't invent a near-duplicate category that splits the Stock Data filter. Accepts `stock-data`, `edit-stock` or `create-stock`.
+
+**Item No is never typed.** `nextItemNo()` takes the numerically highest `externalCode` in the shop, adds one, and keeps that code's prefix and digit width. This shop's catalog runs `APH100001..APH113580` (6 digits) and then `APH100113581..APH100117251` (9 digits) — two widths — so anchoring on the numerically highest code continues the live sequence and cannot collide with either family; a shop numbering some other way is followed just as well. A `P2002` on `(shopId, externalCode)` re-reads and retries up to 5 times, so simultaneous entries each get their own code (verified with 4 concurrent creates).
+
+**Excluded from entry, by design**: Item No (generated), Last Req. Date and Last Sold Date — those are history, and Stock Data already derives them from real `PurchaseRequisition` / `Sale` rows, falling back to the `lastPurchaseReqDate` / `lastSoldSnapshot` columns which stay NULL for a hand-created item.
+
+Fields: Item Name, Generic, Display Category, Department, Sub-Department, Manufacturer, **Item Type**, **UOM**, **Re-order Level**, Box Qty, Purchase Price, Sales Price, Warehouse. Item Type writes `Product.dosageForm` — the same column the Stock Data filter labels "Dosage", sourced from the import's ITEM TYPE NAME. UOM writes `Product.unit` (surfaced as `uom` in Billing/GRN/PR/RTV/VST, defaulting to `Pcs`), and Re-order Level writes `Product.reorderLevel`, which drives the Purchase Requisition reorder list. `GET /products/units` and `GET /products/display-categories` back the picklists so entries stay consistent with the existing catalog.
+
+**Stock always starts at zero, by design.** Creating an item is a catalog entry, not a receipt of goods, so there is no Stock Qty or Expiry Date input — quantity (with its real batch number and expiry) arrives through GRN With PO / GRN Without PO, which add their own batch and increment stock on approval. A `stockQty` or `expiryDate` sent in the payload anyway is ignored rather than honoured.
+
+Purchase Price and Sales Price live on `Batch`, not `Product`, so the form takes a Warehouse and the new item gets one opening batch there — `batchNo` `OPEN-<itemNo>`, barcode `<itemNo>`, `mrp` = Sales Price, `stockQty` 0, mirroring the reference batches `catalogClone` lays down for the imported catalog. `Batch.expiryDate` is required by the schema but a zero-quantity opening row has no real expiry to state, so it takes the same two-years-out placeholder those reference batches carry. Sub-Department is validated against the chosen Department; Department, Manufacturer and Warehouse are all re-checked against the shop.
+
+Models: `Product`, `Batch`, `Department`, `SubDepartment`, `Supplier`, `Store`.
+
+---
+
 ## Expire Products
 
 Lists batches nearing/past expiry with filtering and export (built this session). Follows the same raw-SQL / filter-panel pattern as Stock Data — see `AsterExpireProductsView.tsx` and the corresponding `stockDataRoutes.ts` section for exact filter params.

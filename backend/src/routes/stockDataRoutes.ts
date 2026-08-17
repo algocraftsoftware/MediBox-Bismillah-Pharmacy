@@ -13,7 +13,7 @@ router.use(requireShopAdmin);
 
 // The three lookup endpoints below feed the identical filter panel on both
 // Stock Data and Edit Stock, so either permission opens them.
-router.get('/products/dosage-forms', requirePermission('stock-data', 'edit-stock'), async (req, res) => {
+router.get('/products/dosage-forms', requirePermission('stock-data', 'edit-stock', 'create-stock'), async (req, res) => {
   const rows = await prisma.product.findMany({
     where: { shopId: req.shop!.id, dosageForm: { not: null } },
     select: { dosageForm: true },
@@ -23,7 +23,33 @@ router.get('/products/dosage-forms', requirePermission('stock-data', 'edit-stock
   res.json(rows.map((r) => r.dosageForm));
 });
 
-router.get('/products/generics', requirePermission('stock-data', 'edit-stock'), async (req, res) => {
+// Distinct Display Category values already in use, so Create Stock can offer
+// them as a picklist instead of letting a typo invent a near-duplicate
+// category that then splits the Stock Data filter.
+router.get('/products/display-categories', requirePermission('stock-data', 'edit-stock', 'create-stock'), async (req, res) => {
+  const rows = await prisma.product.findMany({
+    where: { shopId: req.shop!.id, displayCategory: { not: null } },
+    select: { displayCategory: true },
+    distinct: ['displayCategory'],
+    orderBy: { displayCategory: 'asc' },
+  });
+  res.json(rows.map((r) => r.displayCategory));
+});
+
+// Units of measure already in use (Pcs, BOT, BOX, SACH, ...) for the Create
+// Stock UOM picker — the same Product.unit that every other screen shows as
+// "UOM"/"uom", so a new item measures in something the rest of the app knows.
+router.get('/products/units', requirePermission('stock-data', 'edit-stock', 'create-stock'), async (req, res) => {
+  const rows = await prisma.product.findMany({
+    where: { shopId: req.shop!.id },
+    select: { unit: true },
+    distinct: ['unit'],
+    orderBy: { unit: 'asc' },
+  });
+  res.json(rows.map((r) => r.unit).filter(Boolean));
+});
+
+router.get('/products/generics', requirePermission('stock-data', 'edit-stock', 'create-stock'), async (req, res) => {
   const rows = await prisma.product.findMany({
     where: { shopId: req.shop!.id, genericName: { not: '' } },
     select: { genericName: true },
@@ -496,6 +522,225 @@ router.patch('/edit-stock', requirePermission('edit-stock'), asyncHandler(async 
   );
 
   res.json({ ok: true, rowsUpdated: parsed.length, productsUpdated, batchesUpdated });
+}));
+
+// =======================================================
+// CREATE STOCK
+//
+// Adds a brand-new item to the catalog by hand, with the same fields the Stock
+// Data grid shows. Item No is never typed — it continues the shop's own
+// numbering (see nextItemNo) — and Last Req./Last Sold Date are history, so
+// they start empty and fill themselves in from real requisitions and sales.
+//
+// A new item gets one reference Batch in the chosen warehouse, exactly like the
+// ones catalogClone lays down for the imported catalog: it's what carries
+// Purchase Price / Sales Price, both of which live on Batch rather than
+// Product, and it's what makes the item immediately usable everywhere else
+// (Stock Data, Edit Stock, Billing, GRN).
+//
+// That batch always opens at ZERO stock and is never given a real expiry date.
+// Creating an item is a catalog entry, not a receipt of goods — physical
+// quantity (and the batch number and expiry that come with it) arrives through
+// GRN With PO / GRN Without PO, which add their own batch and increment stock
+// on approval. There is deliberately no way to type an opening quantity here.
+// =======================================================
+
+// Used only when a shop has no coded products at all to continue from.
+const FIRST_ITEM_NO = 'APH100001';
+
+// The next Item No in this shop's own sequence: take the highest numeric tail
+// in use, add one, and keep that number's width and prefix. This shop's catalog
+// runs APH100001..APH113580 and then APH100113581..APH100117251 — two different
+// widths — so anchoring on the numerically highest code (rather than a
+// particular format) continues the live sequence and can't collide with either
+// family. A shop that numbers its items some other way is followed just as well.
+async function nextItemNo(shopId: number): Promise<string> {
+  const rows = await prisma.$queryRawUnsafe<{ code: string }[]>(
+    `SELECT "externalCode" AS code
+     FROM "Product"
+     WHERE "shopId" = $1 AND "externalCode" ~ '^[A-Za-z-]*[0-9]+$'
+     ORDER BY (regexp_replace("externalCode", '^[A-Za-z-]*', ''))::bigint DESC
+     LIMIT 1`,
+    shopId,
+  );
+  const latest = rows[0]?.code;
+  const parts = latest ? /^([A-Za-z-]*)(\d+)$/.exec(latest) : null;
+  if (!parts) return FIRST_ITEM_NO;
+  const [, prefix, digits] = parts;
+  return `${prefix}${(BigInt(digits) + 1n).toString().padStart(digits.length, '0')}`;
+}
+
+// Reference batches for the imported catalog are stamped OPEN-<itemNo> with the
+// item code as the barcode; a hand-created item follows the same convention so
+// its opening row is recognisable next to them.
+const openingBatchNo = (itemNo: string) => `OPEN-${itemNo}`;
+
+// Batch.expiryDate is required by the schema, but a zero-quantity opening row
+// for goods that were never physically received has no real expiry to state —
+// the dated batches come from GRN. The imported catalog's own reference batches
+// sit two years out, so this placeholder follows the same convention.
+function defaultOpeningExpiry(): Date {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 2);
+  return d;
+}
+
+router.get('/create-stock/next-item-no', requirePermission('create-stock'), asyncHandler(async (req, res) => {
+  res.json({ itemNo: await nextItemNo(req.shop!.id) });
+}));
+
+router.post('/create-stock', requirePermission('create-stock'), asyncHandler(async (req, res) => {
+  const {
+    storeId,
+    name,
+    genericName,
+    displayCategory,
+    departmentId,
+    subDepartmentId,
+    supplierId,
+    // "Item Type" on the form. Same Product.dosageForm the Stock Data filter
+    // calls "Dosage" — it's the import's ITEM TYPE NAME column.
+    dosageForm,
+    unit,
+    reorderLevel,
+    boxQty,
+    purchasePrice,
+    salesPrice,
+  } = req.body || {};
+
+  const shopId = req.shop!.id;
+
+  const itemName = String(name ?? '').trim();
+  if (!itemName) return res.status(400).json({ error: 'Item Name is required' });
+  if (itemName.length > 191) return res.status(400).json({ error: 'Item Name is too long (max 191 characters)' });
+
+  const sid = Number(storeId);
+  if (!Number.isInteger(sid)) return res.status(400).json({ error: 'Warehouse is required' });
+  const store = await prisma.store.findFirst({ where: { id: sid, shopId } });
+  if (!store) return res.status(404).json({ error: 'Warehouse not found' });
+
+  const deptId = Number(departmentId);
+  if (!Number.isInteger(deptId)) return res.status(400).json({ error: 'Department is required' });
+  const department = await prisma.department.findFirst({ where: { id: deptId, shopId } });
+  if (!department) return res.status(404).json({ error: 'Department not found' });
+
+  // A sub-department has to sit under the department that was picked, or the
+  // item would file itself under a mismatched pair.
+  let subDeptId: number | null = null;
+  if (subDepartmentId !== undefined && subDepartmentId !== null && subDepartmentId !== '') {
+    subDeptId = Number(subDepartmentId);
+    if (!Number.isInteger(subDeptId)) return res.status(400).json({ error: 'Invalid Sub-Department' });
+    const sub = await prisma.subDepartment.findFirst({ where: { id: subDeptId, departmentId: deptId } });
+    if (!sub) return res.status(400).json({ error: 'That Sub-Department does not belong to the selected Department' });
+  }
+
+  let defaultSupplierId: number | null = null;
+  if (supplierId !== undefined && supplierId !== null && supplierId !== '') {
+    defaultSupplierId = Number(supplierId);
+    if (!Number.isInteger(defaultSupplierId)) return res.status(400).json({ error: 'Invalid Manufacturer' });
+    const supplier = await prisma.supplier.findFirst({ where: { id: defaultSupplierId, shopId } });
+    if (!supplier) return res.status(404).json({ error: 'Manufacturer not found' });
+  }
+
+  const box = boxQty === undefined || boxQty === null || boxQty === '' ? 1 : Number(boxQty);
+  if (!Number.isInteger(box) || box < 1) {
+    return res.status(400).json({ error: 'Box Qty must be a whole number of 1 or more' });
+  }
+
+  const parsePrice = (value: unknown) => {
+    if (value === undefined || value === null || value === '') return 0;
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) return null;
+    // Money is stored as a Float — round to paisa so the grid and DB agree,
+    // same as Edit Stock.
+    return Math.round(n * 100) / 100;
+  };
+  const pp = parsePrice(purchasePrice);
+  if (pp === null) return res.status(400).json({ error: 'Purchase Price must be a number of 0 or more' });
+  const sp = parsePrice(salesPrice);
+  if (sp === null) return res.status(400).json({ error: 'Sales Price must be a number of 0 or more' });
+
+  const rol =
+    reorderLevel === undefined || reorderLevel === null || reorderLevel === '' ? 0 : Number(reorderLevel);
+  if (!Number.isInteger(rol) || rol < 0) {
+    return res.status(400).json({ error: 'Re-order Level must be a whole number of 0 or more' });
+  }
+
+  // Unit is NOT NULL with a "Pcs" default on Product; an empty box falls back
+  // to that rather than storing a blank UOM that reads as missing everywhere.
+  const uom = String(unit ?? '').trim() || 'Pcs';
+  if (uom.length > 32) return res.status(400).json({ error: 'UOM is too long (max 32 characters)' });
+
+  const category = String(displayCategory ?? '').trim();
+  const generic = String(genericName ?? '').trim();
+  const dosage = String(dosageForm ?? '').trim();
+
+  // Two people adding an item at the same moment would both read the same
+  // "next" code, and the second insert then trips the (shopId, externalCode)
+  // unique index — so re-read and retry rather than failing the entry.
+  const MAX_ITEM_NO_ATTEMPTS = 5;
+  for (let attempt = 1; attempt <= MAX_ITEM_NO_ATTEMPTS; attempt += 1) {
+    const itemNo = await nextItemNo(shopId);
+    try {
+      const created = await prisma.$transaction(async (tx) => {
+        const product = await tx.product.create({
+          data: {
+            shopId,
+            name: itemName,
+            genericName: generic,
+            departmentId: deptId,
+            subDepartmentId: subDeptId,
+            defaultSupplierId,
+            displayCategory: category || null,
+            externalCode: itemNo,
+            boxQty: box,
+            unit: uom,
+            reorderLevel: rol,
+            dosageForm: dosage || null,
+          },
+        });
+        const batch = await tx.batch.create({
+          data: {
+            productId: product.id,
+            storeId: sid,
+            batchNo: openingBatchNo(itemNo),
+            barcode: itemNo,
+            expiryDate: defaultOpeningExpiry(),
+            // The imported catalog's reference rows carry MRP == Sales Price;
+            // Billing prices off sellingPrice, so both take the entered figure.
+            mrp: sp,
+            purchasePrice: pp,
+            sellingPrice: sp,
+            // Always zero — see the section header. Stock arrives via GRN.
+            stockQty: 0,
+          },
+        });
+        return { product, batch };
+      });
+
+      return res.status(201).json({
+        productId: created.product.id,
+        batchId: created.batch.id,
+        itemNo,
+        itemName: created.product.name,
+        genericName: created.product.genericName,
+        displayCategory: created.product.displayCategory,
+        department: department.name,
+        itemType: created.product.dosageForm,
+        unit: created.product.unit,
+        reorderLevel: created.product.reorderLevel,
+        boxQty: created.product.boxQty,
+        purchasePrice: created.batch.purchasePrice,
+        salesPrice: created.batch.sellingPrice,
+        stockQty: created.batch.stockQty,
+      });
+    } catch (err: any) {
+      const isCodeClash = err?.code === 'P2002' && String(err?.meta?.target ?? '').includes('externalCode');
+      if (!isCodeClash || attempt === MAX_ITEM_NO_ATTEMPTS) throw err;
+    }
+  }
+
+  return res.status(409).json({ error: 'Could not allocate an Item No — please try again' });
 }));
 
 // =======================================================
