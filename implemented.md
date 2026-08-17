@@ -77,6 +77,25 @@ Models: `Product`, `Department`, `Supplier`, `Batch`.
 
 ---
 
+## Edit Stock
+
+The Stock Data grid again — identical filter panel, columns, pagination and XLSX export — but with four columns writable straight in the grid: **Display Category**, **Purchase Price**, **Sales Price**, **Box Qty**. Applies to the whole cloned catalog (~17k items). **Frontend**: `AsterEditStockView.tsx`. **Backend**: `stockDataRoutes.ts` EDIT STOCK section, sharing `buildStockDataQuery` plus the `stockGridColumnsSql` / `stockGridExportColumnsSql` column lists with Stock Data so the two grids can't drift apart.
+
+- `GET /edit-stock` — same params as `/stock-data`, plus `productId`/`batchId` per row so a save can target the exact row shown. Ordered `p.name, p.id, b.id` (Stock Data sorts on name alone) so rows being edited can't shuffle between the read and the save.
+- `PATCH /edit-stock` — `{ storeId, updates: [{ productId, batchId, displayCategory?, purchasePrice?, salesPrice?, boxQty? }] }`. One request carries every edited row on the page and runs in a single transaction, so a page of edits lands completely or not at all. Only fields the user actually changed are sent.
+- `GET /edit-stock/export` — same filters → XLSX (`edit-stock.xlsx`).
+- `/products/dosage-forms`, `/products/generics`, `/products/stock-search-suggest` now accept `stock-data` **or** `edit-stock`, since one filter panel serves both screens.
+
+**Edit scope follows the table each column lives in**: Display Category and Box Qty are `Product` columns, so they change the item everywhere (all warehouses); Purchase Price and Sales Price are `Batch` columns, so they only touch the batch shown for the selected warehouse. A row whose item has no batch in that warehouse (`batchId: null`) has both price cells locked — there is nothing to write to until a GRN receives it. The grid re-reads after every save so catalog-wide edits show up in all of that item's rows.
+
+Validation (server-side, mirrored in the grid): Box Qty must be a whole number ≥ 1; prices must be ≥ 0 and are rounded to paisa on the way in; a cleared Display Category stores `NULL`, not `""`; ownership is re-checked per row (product belongs to this shop, batch belongs to that product *in that warehouse*) so a tampered payload can't reach another shop's data; max 200 rows per save.
+
+Sales Price writes `Batch.sellingPrice`, which is what Billing charges — so the grid flags a Sales Price below Purchase Price, since `billingRoutes.ts` refuses to sell below cost and would otherwise fail later at the counter.
+
+Models: `Product`, `Batch`.
+
+---
+
 ## Expire Products
 
 Lists batches nearing/past expiry with filtering and export (built this session). Follows the same raw-SQL / filter-panel pattern as Stock Data — see `AsterExpireProductsView.tsx` and the corresponding `stockDataRoutes.ts` section for exact filter params.

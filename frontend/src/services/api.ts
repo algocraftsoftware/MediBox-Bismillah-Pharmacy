@@ -14,6 +14,7 @@ import { billingApi } from "./shopApi/billing";
 import { coreApi } from "./shopApi/core";
 import { customerApi } from "./shopApi/customer";
 import { dashboardApi } from "./shopApi/dashboard";
+import { editStockApi } from "./shopApi/editStock";
 import { employeesApi } from "./shopApi/employees";
 import { expensesApi } from "./shopApi/expenses";
 import { expireProductsApi } from "./shopApi/expireProducts";
@@ -247,6 +248,7 @@ export function shopApi(slug: string, token: string) {
   return {
     ...coreApi(base, token),
     ...stockDataApi(base, token),
+    ...editStockApi(base, token),
     ...expireProductsApi(base, token),
     ...soldProductLedgerApi(base, token),
     ...customerApi(base, token),

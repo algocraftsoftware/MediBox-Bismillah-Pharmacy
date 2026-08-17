@@ -23,7 +23,10 @@ export const MENU_FEATURES: { id: string; label: string }[] = [
   { id: "return-to-vendor", label: "Return To Vendor (RTV)" },
   { id: "adj-with-po", label: "ADJ. With PO" },
   { id: "adj-with-others", label: "ADJ. With Others" },
-  // Not on the layout sheet — appended after the numbered items.
+  // Not on the layout sheet — appended after the numbered items so the serial
+  // order above keeps matching it. Edit Stock leads this group: it's the one
+  // built feature here, and the four below it are still Coming Soon screens.
+  { id: "edit-stock", label: "Edit Stock" },
   { id: "internal-issue", label: "Internal Issue" },
   { id: "internal-receive", label: "Internal Receive" },
   { id: "internal-requisition", label: "Internal Requisition" },

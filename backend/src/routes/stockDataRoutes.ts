@@ -11,7 +11,9 @@ router.use(requireShopAdmin);
 // STOCK DATA
 // =======================================================
 
-router.get('/products/dosage-forms', requirePermission('stock-data'), async (req, res) => {
+// The three lookup endpoints below feed the identical filter panel on both
+// Stock Data and Edit Stock, so either permission opens them.
+router.get('/products/dosage-forms', requirePermission('stock-data', 'edit-stock'), async (req, res) => {
   const rows = await prisma.product.findMany({
     where: { shopId: req.shop!.id, dosageForm: { not: null } },
     select: { dosageForm: true },
@@ -21,7 +23,7 @@ router.get('/products/dosage-forms', requirePermission('stock-data'), async (req
   res.json(rows.map((r) => r.dosageForm));
 });
 
-router.get('/products/generics', requirePermission('stock-data'), async (req, res) => {
+router.get('/products/generics', requirePermission('stock-data', 'edit-stock'), async (req, res) => {
   const rows = await prisma.product.findMany({
     where: { shopId: req.shop!.id, genericName: { not: '' } },
     select: { genericName: true },
@@ -50,7 +52,7 @@ router.get('/products/search-names', requirePermission('sold-product-ledger'), a
 // Live suggestions for Stock Data's Search box, matching the same
 // itemNo/name/genericName breadth as the actual search filter (buildStockDataQuery
 // below) — so the dropdown offers exactly what typing and clicking SEARCH would find.
-router.get('/products/stock-search-suggest', requirePermission('stock-data'), asyncHandler(async (req, res) => {
+router.get('/products/stock-search-suggest', requirePermission('stock-data', 'edit-stock'), asyncHandler(async (req, res) => {
   const { q } = req.query;
   if (!q || String(q).trim().length < 2) return res.json([]);
   const term = String(q).trim();
@@ -124,9 +126,71 @@ function buildStockDataQuery(f: StockDataFilters) {
   return { whereSql, fromSql, params, nextIdx: idx };
 }
 
+// The grid's column list, shared verbatim by Stock Data and Edit Stock so the
+// two screens can never drift apart. `identityColumns` carries the productId /
+// batchId Edit Stock needs to aim a save at the exact row being shown — Stock
+// Data is read-only and doesn't select them.
+//
+// storeId is interpolated (not bound) because it appears inside correlated
+// subqueries that the shared $N parameter numbering in buildStockDataQuery
+// doesn't cover; every caller passes it through Number.isInteger first.
+function stockGridColumnsSql(storeId: number, identityColumns = '') {
+  return `
+      ${identityColumns}
+      p."externalCode" as "itemNo",
+      p.name as "itemName",
+      p."genericName",
+      p."displayCategory",
+      d.name as department,
+      s.name as manufacturer,
+      COALESCE(
+        (SELECT MAX(pr."createdAt") FROM "PurchaseRequisitionItem" pri JOIN "PurchaseRequisition" pr ON pr.id = pri."requisitionId"
+          WHERE pri."productId" = p.id AND pr."storeId" = ${storeId}),
+        p."lastPurchaseReqDate"
+      ) as "lastPurchaseReqDate",
+      COALESCE(
+        (SELECT MAX(sale."createdAt") FROM "SaleItem" si JOIN "Sale" sale ON sale.id = si."saleId"
+          WHERE si."productId" = p.id AND sale."storeId" = ${storeId}),
+        p."lastSoldSnapshot"
+      ) as "lastSoldDate",
+      b."purchasePrice",
+      b."sellingPrice" as "salesPrice",
+      p."boxQty",
+      COALESCE(b."stockQty", 0) as "stockQty"
+  `;
+}
+
+// Same columns as stockGridColumnsSql but aliased to the spreadsheet headers —
+// shared by the Stock Data and Edit Stock XLSX exports.
+function stockGridExportColumnsSql(storeId: number) {
+  return `
+      p."externalCode" as "Item No",
+      p.name as "Item Name",
+      p."genericName" as "Generic",
+      p."displayCategory" as "Display Category",
+      d.name as "Department",
+      s.name as "Manufacturer",
+      COALESCE(
+        (SELECT MAX(pr."createdAt") FROM "PurchaseRequisitionItem" pri JOIN "PurchaseRequisition" pr ON pr.id = pri."requisitionId"
+          WHERE pri."productId" = p.id AND pr."storeId" = ${storeId}),
+        p."lastPurchaseReqDate"
+      ) as "Last Requisition Date",
+      COALESCE(
+        (SELECT MAX(sale."createdAt") FROM "SaleItem" si JOIN "Sale" sale ON sale.id = si."saleId"
+          WHERE si."productId" = p.id AND sale."storeId" = ${storeId}),
+        p."lastSoldSnapshot"
+      ) as "Last Sold Date",
+      b."purchasePrice" as "Purchase Price",
+      b."sellingPrice" as "Sales Price",
+      p."boxQty" as "Box Qty",
+      COALESCE(b."stockQty", 0) as "Stock Qty"
+  `;
+}
+
 router.get('/stock-data', requirePermission('stock-data'), async (req, res) => {
   const { storeId, type, dosageForm, generic, departmentId, supplierId, search, page, pageSize } = req.query;
   if (!storeId) return res.status(400).json({ error: 'storeId (Warehouse) is required' });
+  if (!Number.isInteger(Number(storeId))) return res.status(400).json({ error: 'Invalid Warehouse' });
 
   const shopId = req.shop!.id;
   const pageNum = Math.max(1, Number(page) || 1);
@@ -146,26 +210,7 @@ router.get('/stock-data', requirePermission('stock-data'), async (req, res) => {
 
   const dataSql = `
     SELECT
-      p."externalCode" as "itemNo",
-      p.name as "itemName",
-      p."genericName",
-      p."displayCategory",
-      d.name as department,
-      s.name as manufacturer,
-      COALESCE(
-        (SELECT MAX(pr."createdAt") FROM "PurchaseRequisitionItem" pri JOIN "PurchaseRequisition" pr ON pr.id = pri."requisitionId"
-          WHERE pri."productId" = p.id AND pr."storeId" = ${Number(storeId)}),
-        p."lastPurchaseReqDate"
-      ) as "lastPurchaseReqDate",
-      COALESCE(
-        (SELECT MAX(sale."createdAt") FROM "SaleItem" si JOIN "Sale" sale ON sale.id = si."saleId"
-          WHERE si."productId" = p.id AND sale."storeId" = ${Number(storeId)}),
-        p."lastSoldSnapshot"
-      ) as "lastSoldDate",
-      b."purchasePrice",
-      b."sellingPrice" as "salesPrice",
-      p."boxQty",
-      COALESCE(b."stockQty", 0) as "stockQty"
+    ${stockGridColumnsSql(Number(storeId))}
     ${fromSql}
     WHERE ${whereSql}
     ORDER BY p.name ASC
@@ -184,6 +229,7 @@ router.get('/stock-data', requirePermission('stock-data'), async (req, res) => {
 router.get('/stock-data/export', requirePermission('stock-data'), async (req, res) => {
   const { storeId, type, dosageForm, generic, departmentId, supplierId, search } = req.query;
   if (!storeId) return res.status(400).json({ error: 'storeId (Warehouse) is required' });
+  if (!Number.isInteger(Number(storeId))) return res.status(400).json({ error: 'Invalid Warehouse' });
 
   const { whereSql, fromSql, params } = buildStockDataQuery({
     storeId: Number(storeId),
@@ -198,26 +244,7 @@ router.get('/stock-data/export', requirePermission('stock-data'), async (req, re
 
   const sql = `
     SELECT
-      p."externalCode" as "Item No",
-      p.name as "Item Name",
-      p."genericName" as "Generic",
-      p."displayCategory" as "Display Category",
-      d.name as "Department",
-      s.name as "Manufacturer",
-      COALESCE(
-        (SELECT MAX(pr."createdAt") FROM "PurchaseRequisitionItem" pri JOIN "PurchaseRequisition" pr ON pr.id = pri."requisitionId"
-          WHERE pri."productId" = p.id AND pr."storeId" = ${Number(storeId)}),
-        p."lastPurchaseReqDate"
-      ) as "Last Requisition Date",
-      COALESCE(
-        (SELECT MAX(sale."createdAt") FROM "SaleItem" si JOIN "Sale" sale ON sale.id = si."saleId"
-          WHERE si."productId" = p.id AND sale."storeId" = ${Number(storeId)}),
-        p."lastSoldSnapshot"
-      ) as "Last Sold Date",
-      b."purchasePrice" as "Purchase Price",
-      b."sellingPrice" as "Sales Price",
-      p."boxQty" as "Box Qty",
-      COALESCE(b."stockQty", 0) as "Stock Qty"
+    ${stockGridExportColumnsSql(Number(storeId))}
     ${fromSql}
     WHERE ${whereSql}
     ORDER BY p.name ASC
@@ -233,6 +260,243 @@ router.get('/stock-data/export', requirePermission('stock-data'), async (req, re
   res.setHeader('Content-Disposition', 'attachment; filename="stock-data.xlsx"');
   res.send(buffer);
 });
+
+// =======================================================
+// EDIT STOCK
+//
+// The Stock Data grid again — identical filters, columns and export — but
+// writable: Display Category, Purchase Price, Sales Price and Box Qty can be
+// edited straight in the grid and saved back to the catalog. Reuses
+// buildStockDataQuery and the shared column lists above so the two screens
+// show exactly the same rows.
+//
+// The two halves of a row live in different tables, which decides the scope of
+// each edit: Display Category and Box Qty are Product columns (catalog-wide,
+// every warehouse), while Purchase Price and Sales Price are Batch columns
+// (only the batch shown in the selected warehouse's row).
+// =======================================================
+
+// A page of the grid is 10 rows, so a realistic save is tiny; the cap only
+// exists to keep one request from opening an unbounded transaction.
+const MAX_EDIT_STOCK_UPDATES = 200;
+
+type EditStockParsed = {
+  productId: number;
+  batchId: number | null;
+  productData: { displayCategory?: string | null; boxQty?: number };
+  batchData: { purchasePrice?: number; sellingPrice?: number };
+};
+
+router.get('/edit-stock', requirePermission('edit-stock'), asyncHandler(async (req, res) => {
+  const { storeId, type, dosageForm, generic, departmentId, supplierId, search, page, pageSize } = req.query;
+  if (!storeId) return res.status(400).json({ error: 'storeId (Warehouse) is required' });
+  const sid = Number(storeId);
+  if (!Number.isInteger(sid)) return res.status(400).json({ error: 'Invalid Warehouse' });
+
+  const shopId = req.shop!.id;
+  const pageNum = Math.max(1, Number(page) || 1);
+  const size = Math.min(500, Math.max(1, Number(pageSize) || 50));
+  const offset = (pageNum - 1) * size;
+
+  const { whereSql, fromSql, params } = buildStockDataQuery({
+    storeId: sid,
+    shopId,
+    type: type ? String(type) : undefined,
+    dosageForm: dosageForm ? String(dosageForm) : undefined,
+    generic: generic ? String(generic) : undefined,
+    departmentId: departmentId ? String(departmentId) : undefined,
+    supplierId: supplierId ? String(supplierId) : undefined,
+    search: search ? String(search) : undefined,
+  });
+
+  // Fully deterministic ordering (Stock Data sorts on name alone) — a product
+  // with several batches in one warehouse yields one row per batch, and rows
+  // being edited must not shuffle between the read and the save that follows it.
+  const dataSql = `
+    SELECT
+    ${stockGridColumnsSql(sid, 'p.id as "productId", b.id as "batchId",')}
+    ${fromSql}
+    WHERE ${whereSql}
+    ORDER BY p.name ASC, p.id ASC, b.id ASC
+    LIMIT ${size} OFFSET ${offset}
+  `;
+  const countSql = `SELECT COUNT(*)::int as total ${fromSql} WHERE ${whereSql}`;
+
+  const [rows, countResult] = await Promise.all([
+    prisma.$queryRawUnsafe<any[]>(dataSql, ...params),
+    prisma.$queryRawUnsafe<{ total: number }[]>(countSql, ...params),
+  ]);
+
+  res.json({ rows, total: countResult[0]?.total || 0, page: pageNum, pageSize: size });
+}));
+
+router.get('/edit-stock/export', requirePermission('edit-stock'), asyncHandler(async (req, res) => {
+  const { storeId, type, dosageForm, generic, departmentId, supplierId, search } = req.query;
+  if (!storeId) return res.status(400).json({ error: 'storeId (Warehouse) is required' });
+  const sid = Number(storeId);
+  if (!Number.isInteger(sid)) return res.status(400).json({ error: 'Invalid Warehouse' });
+
+  const { whereSql, fromSql, params } = buildStockDataQuery({
+    storeId: sid,
+    shopId: req.shop!.id,
+    type: type ? String(type) : undefined,
+    dosageForm: dosageForm ? String(dosageForm) : undefined,
+    generic: generic ? String(generic) : undefined,
+    departmentId: departmentId ? String(departmentId) : undefined,
+    supplierId: supplierId ? String(supplierId) : undefined,
+    search: search ? String(search) : undefined,
+  });
+
+  const sql = `
+    SELECT
+    ${stockGridExportColumnsSql(sid)}
+    ${fromSql}
+    WHERE ${whereSql}
+    ORDER BY p.name ASC, p.id ASC, b.id ASC
+  `;
+  const rows = await prisma.$queryRawUnsafe<any[]>(sql, ...params);
+
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Edit Stock');
+  const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename="edit-stock.xlsx"');
+  res.send(buffer);
+}));
+
+// Bulk save for the grid — one request carries every edited row on the page, so
+// a page of edits either lands completely or not at all.
+router.patch('/edit-stock', requirePermission('edit-stock'), asyncHandler(async (req, res) => {
+  const { storeId, updates } = req.body || {};
+  const sid = Number(storeId);
+  if (!Number.isInteger(sid)) return res.status(400).json({ error: 'storeId (Warehouse) is required' });
+  if (!Array.isArray(updates) || updates.length === 0) {
+    return res.status(400).json({ error: 'No changes to save' });
+  }
+  if (updates.length > MAX_EDIT_STOCK_UPDATES) {
+    return res.status(400).json({ error: `Too many rows in one save (max ${MAX_EDIT_STOCK_UPDATES})` });
+  }
+
+  const shopId = req.shop!.id;
+
+  // The warehouse itself must belong to this shop, or a price edit could be
+  // aimed at another shop's store id.
+  const store = await prisma.store.findFirst({ where: { id: sid, shopId } });
+  if (!store) return res.status(404).json({ error: 'Warehouse not found' });
+
+  const parsed: EditStockParsed[] = [];
+  for (const raw of updates) {
+    const productId = Number(raw?.productId);
+    if (!Number.isInteger(productId)) return res.status(400).json({ error: 'Invalid productId in the submitted rows' });
+
+    const batchId = raw?.batchId === null || raw?.batchId === undefined ? null : Number(raw.batchId);
+    if (batchId !== null && !Number.isInteger(batchId)) {
+      return res.status(400).json({ error: 'Invalid batchId in the submitted rows' });
+    }
+
+    const productData: EditStockParsed['productData'] = {};
+    const batchData: EditStockParsed['batchData'] = {};
+
+    if (raw.displayCategory !== undefined) {
+      const text = raw.displayCategory === null ? '' : String(raw.displayCategory).trim();
+      if (text.length > 191) return res.status(400).json({ error: 'Display Category is too long (max 191 characters)' });
+      // Cleared cell means "no category" rather than an empty string, matching
+      // the nullable column every other screen reads.
+      productData.displayCategory = text === '' ? null : text;
+    }
+
+    if (raw.boxQty !== undefined) {
+      const qty = Number(raw.boxQty);
+      if (!Number.isInteger(qty) || qty < 1) {
+        return res.status(400).json({ error: 'Box Qty must be a whole number of 1 or more' });
+      }
+      productData.boxQty = qty;
+    }
+
+    // Prices are Float columns; rounding to paisa here keeps what the grid
+    // shows (2dp) and what the DB stores identical.
+    if (raw.purchasePrice !== undefined) {
+      const price = Number(raw.purchasePrice);
+      if (!Number.isFinite(price) || price < 0) {
+        return res.status(400).json({ error: 'Purchase Price must be a number of 0 or more' });
+      }
+      batchData.purchasePrice = Math.round(price * 100) / 100;
+    }
+
+    if (raw.salesPrice !== undefined) {
+      const price = Number(raw.salesPrice);
+      if (!Number.isFinite(price) || price < 0) {
+        return res.status(400).json({ error: 'Sales Price must be a number of 0 or more' });
+      }
+      batchData.sellingPrice = Math.round(price * 100) / 100;
+    }
+
+    const hasBatchEdit = Object.keys(batchData).length > 0;
+    if (hasBatchEdit && batchId === null) {
+      return res.status(400).json({
+        error:
+          'Purchase Price and Sales Price live on a batch — this item has no batch in the selected warehouse yet, so receive it through a GRN first.',
+      });
+    }
+    if (Object.keys(productData).length === 0 && !hasBatchEdit) continue;
+
+    parsed.push({ productId, batchId, productData, batchData });
+  }
+
+  if (parsed.length === 0) return res.status(400).json({ error: 'No changes to save' });
+
+  // Every targeted product must be this shop's, and every targeted batch must
+  // belong to that same product in the selected warehouse.
+  const productIds = [...new Set(parsed.map((u) => u.productId))];
+  const ownedProducts = await prisma.product.findMany({
+    where: { id: { in: productIds }, shopId },
+    select: { id: true },
+  });
+  if (ownedProducts.length !== productIds.length) {
+    return res.status(404).json({ error: 'One or more items were not found in this shop' });
+  }
+
+  const batchIds = [...new Set(parsed.filter((u) => u.batchId !== null).map((u) => u.batchId as number))];
+  if (batchIds.length > 0) {
+    const ownedBatches = await prisma.batch.findMany({
+      where: { id: { in: batchIds }, storeId: sid, product: { shopId } },
+      select: { id: true, productId: true },
+    });
+    const productIdByBatch = new Map(ownedBatches.map((b) => [b.id, b.productId]));
+    for (const u of parsed) {
+      if (u.batchId === null) continue;
+      const owner = productIdByBatch.get(u.batchId);
+      if (owner === undefined) {
+        return res.status(404).json({ error: 'One or more batches were not found in the selected warehouse' });
+      }
+      if (owner !== u.productId) {
+        return res.status(400).json({ error: 'A submitted batch does not belong to its item' });
+      }
+    }
+  }
+
+  let productsUpdated = 0;
+  let batchesUpdated = 0;
+  await prisma.$transaction(
+    async (tx) => {
+      for (const u of parsed) {
+        if (Object.keys(u.productData).length > 0) {
+          await tx.product.update({ where: { id: u.productId }, data: u.productData });
+          productsUpdated += 1;
+        }
+        if (u.batchId !== null && Object.keys(u.batchData).length > 0) {
+          await tx.batch.update({ where: { id: u.batchId }, data: u.batchData });
+          batchesUpdated += 1;
+        }
+      }
+    },
+    { timeout: 30000, maxWait: 10000 },
+  );
+
+  res.json({ ok: true, rowsUpdated: parsed.length, productsUpdated, batchesUpdated });
+}));
 
 // =======================================================
 // EXPIRE PRODUCTS

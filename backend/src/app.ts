@@ -1,6 +1,9 @@
+// Must stay the first import: modules further down this list read process.env
+// as they load (auth.ts's JWT_SECRET, db.ts's PrismaClient), so the .env file
+// has to be in place before any of them are required. See src/env.ts.
+import './env';
 import compression from 'compression';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import express from 'express';
 import { apiLimiter, authLimiter } from './middleware/rateLimit';
 import authRoutes from './routes/authRoutes';
@@ -22,8 +25,6 @@ import adjWithPoRoutes from './routes/adjWithPoRoutes';
 import adjOthersRoutes from './routes/adjOthersRoutes';
 import employeeRoutes from './routes/employeeRoutes';
 import expenseRoutes from './routes/expenseRoutes';
-
-dotenv.config();
 
 const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((o) => o.trim());
 
