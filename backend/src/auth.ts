@@ -189,6 +189,26 @@ export function requirePermission(...featureIds: string[]) {
   };
 }
 
+// Like requirePermission, but also admits any ADMIN regardless of the granted
+// list — for a feature that belongs to the shop's admin by role (their own
+// Financial Overview) while staying grantable to Staff. This is NOT the blanket
+// admin bypass that requirePermission deliberately dropped: only endpoints that
+// opt into this helper are affected, so the Super Admin can still restrict every
+// other feature from an admin. Matches the frontend, where OVERVIEW shows for
+// every admin (see DashboardTabBar / the app layout's route guard).
+export function requireAdminOrPermission(...featureIds: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const auth = req.auth;
+    if (!auth || auth.role !== 'SHOP_ADMIN') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    if (auth.adminRole === 'ADMIN' || featureIds.some((id) => auth.permissions?.includes(id))) {
+      return next();
+    }
+    return res.status(403).json({ error: `This account does not have access to "${featureIds.join('" or "')}"` });
+  };
+}
+
 // Unlike requirePermission, this is not grantable via the Staff permission
 // checklist at all — Settings (changing any account's username/password,
 // including its own) is deliberately Admin-only with no override, since a

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db';
-import { requirePermission, requireShopAdmin } from '../auth';
+import { requireAdminOrPermission, requireShopAdmin } from '../auth';
 import { asyncHandler } from '../asyncHandler';
 
 const router = Router({ mergeParams: true });
@@ -409,7 +409,7 @@ export async function shopStanding(shopId: number, storeId: number | undefined, 
   };
 }
 
-router.get('/finance/overview', requirePermission('finance-overview'), asyncHandler(async (req, res) => {
+router.get('/finance/overview', requireAdminOrPermission('finance-overview'), asyncHandler(async (req, res) => {
   const shopId = req.shop!.id;
   const storeId = req.query.storeId ? Number(req.query.storeId) : undefined;
   const now = new Date();
@@ -461,7 +461,7 @@ router.get('/finance/overview', requirePermission('finance-overview'), asyncHand
 // after a bounded fetch from each rather than with SQL OFFSET across a UNION.
 const JOURNAL_FETCH_CAP = 500;
 
-router.get('/finance/journal', requirePermission('finance-overview'), asyncHandler(async (req, res) => {
+router.get('/finance/journal', requireAdminOrPermission('finance-overview'), asyncHandler(async (req, res) => {
   const shopId = req.shop!.id;
   const storeId = req.query.storeId ? Number(req.query.storeId) : undefined;
   const now = new Date();
