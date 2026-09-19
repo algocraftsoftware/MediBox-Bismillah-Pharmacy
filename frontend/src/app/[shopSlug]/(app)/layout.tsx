@@ -25,7 +25,13 @@ function Shell({ children }: { children: React.ReactNode }) {
 
   const hasAccess = adminOnlyRoute
     ? session.adminRole === "ADMIN"
-    : !ALL_FEATURE_IDS.includes(activeRoute) || session.permissions.includes(activeRoute);
+    : !ALL_FEATURE_IDS.includes(activeRoute) ||
+      session.permissions.includes(activeRoute) ||
+      // Financial Overview is the shop's own numbers — always reachable by the
+      // shop admin (same footing as Settings), so the OVERVIEW tab that this
+      // unlocks isn't a dead button for an admin whose stored permissions
+      // predate the feature. Staff still reach it only when it's been granted.
+      (activeRoute === "finance-overview" && session.adminRole === "ADMIN");
 
   return (
     <div className="flex flex-col h-screen bg-[#f8fafc] text-slate-900 font-sans overflow-hidden">

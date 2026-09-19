@@ -83,8 +83,10 @@ export const DashboardTabBar: React.FC<{
 
       {/* The whole-shop overview — income, spend, profit, growth, the ledger and
           what the shop currently holds, all read live from the app's own
-          records. Gated on the same granted-features rule as the rest. */}
-      {permissions.includes("finance-overview") && (
+          records. Always available to the shop admin (their own numbers, same
+          footing as Settings beside it) so it can't vanish for an admin whose
+          stored permissions predate this feature; staff still need it granted. */}
+      {(adminRole === "ADMIN" || permissions.includes("finance-overview")) && (
         <button
           onClick={() => router.push(`/${shopSlug}/finance-overview`)}
           className={`flex items-center gap-1.5 border rounded-full pl-3 pr-2 py-1.5 shadow-sm font-bold text-xs transition-colors ${
