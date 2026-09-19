@@ -1,0 +1,38 @@
+import { Department, ShopAdminRole, Store, Supplier } from "../../types";
+import { request } from "./http";
+
+export interface SettingsAccount {
+  id: number;
+  name: string;
+  username: string;
+  role: ShopAdminRole;
+  status: "ACTIVE" | "INACTIVE";
+}
+
+export function coreApi(base: string, token: string) {
+  return {
+    // `role` and `permissions` are the account's CURRENT values straight from
+    // the DB — the session loader refreshes the menu from these, so a Super
+    // Admin's permission edit takes effect without the user logging out.
+    me: () =>
+      request<{
+        admin: { id: number; name: string; username: string; role: ShopAdminRole; permissions: string[] };
+        shop: any;
+      }>(`${base}/me`, token),
+
+    getStores: () => request<Store[]>(`${base}/stores`, token),
+
+    getDepartments: () => request<Department[]>(`${base}/departments`, token),
+    getSuppliers: () => request<Supplier[]>(`${base}/suppliers`, token),
+    createSupplier: (data: { name: string; contact?: string; address?: string; paymentMode?: string }) =>
+      request<Supplier>(`${base}/suppliers`, token, { method: "POST", body: JSON.stringify(data) }),
+    getAdmins: () => request<{ id: number; name: string; username: string }[]>(`${base}/admins`, token),
+
+    listSettingsAccounts: () => request<SettingsAccount[]>(`${base}/settings/accounts`, token),
+    updateSettingsAccount: (id: number, data: { username?: string; password?: string }) =>
+      request<SettingsAccount>(`${base}/settings/accounts/${id}`, token, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+  };
+}

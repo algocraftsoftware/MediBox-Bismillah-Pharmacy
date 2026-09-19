@@ -1,0 +1,118 @@
+// =======================================================
+// SHOP LEVEL — SALES / BILLING
+// =======================================================
+
+model Sale {
+  id              Int           @id @default(autoincrement())
+  shopId          Int
+  shop            Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  storeId         Int
+  store           Store         @relation(fields: [storeId], references: [id])
+  invoiceNo       String
+  customerId      Int?
+  customer        Customer?     @relation(fields: [customerId], references: [id])
+  cashierId       Int
+  cashier         ShopAdmin     @relation(fields: [cashierId], references: [id])
+  doctorName      String?
+  doctorAddress   String?
+  prescriptionId  String?
+  consultationId  String?
+  discountType    String        @default("General Discount")
+  discAmt         Float         @default(0)
+  discPct         Float         @default(0)
+  itemAmount      Float
+  vatAmount       Float         @default(0)
+  totalAmount     Float
+  netAmount       Float
+  adjustAmount    Float         @default(0)
+  receivable      Float
+  paidCash        Float         @default(0)
+  paidMobileBanking Float       @default(0)
+  paidCard        Float         @default(0)
+  mobileBankingType String?
+  transactionNumber String?
+  cardType        String?
+  bankName        String?
+  paidAmount      Float
+  dueAmount       Float         @default(0)
+  refundAmount    Float         @default(0)
+  paymentStatus   PaymentStatus @default(PAID)
+  deliveryMode    DeliveryMode  @default(PICKUP)
+  deliveryType    String?
+  remarks         String?
+  shift           Shift
+  createdAt       DateTime      @default(now())
+
+  items         SaleItem[]
+  cancellations SaleItemCancellation[]
+  duePayments     DuePayment[]
+
+  @@unique([storeId, invoiceNo])
+  @@index([shopId, createdAt])
+  @@index([storeId, createdAt])
+  @@index([shopId, cashierId])
+  @@index([invoiceNo(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+model SaleItem {
+  id                  Int      @id @default(autoincrement())
+  saleId              Int
+  sale                Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  batchId             Int
+  batch               Batch    @relation(fields: [batchId], references: [id])
+  productId           Int
+  product             Product  @relation(fields: [productId], references: [id])
+  productNameSnapshot String
+  departmentSnapshot  String
+  supplierSnapshot    String?
+  batchNoSnapshot     String
+  uom                 String
+  mrp                 Float
+  qty                 Int
+  vatPct              Float    @default(0)
+  vatAmt              Float    @default(0)
+  discPct             Float    @default(0)
+  discAmt             Float    @default(0)
+  total               Float
+  isFree              Boolean  @default(false)
+  isPrdm              Boolean  @default(false)
+  canceledQty         Int      @default(0)
+
+  cancellations SaleItemCancellation[]
+
+  @@index([productId])
+}
+
+// A payment taken against an invoice's outstanding due, after the sale itself.
+//
+// Receiving a due used to only bump the invoice's own paid* columns, which are
+// dated by the sale. A payment collected today against last week's invoice
+// therefore landed in last week's takings and was invisible in today's — the
+// money came in, and no screen showed it. Each collection is now its own row,
+// stamped when it happened and split the way it was taken, so a day's
+// collection can be reported on the day it actually occurred.
+//
+// The invoice's paid* columns are still updated as before: they remain the
+// running state of that invoice.
+model DuePayment {
+  id                Int       @id @default(autoincrement())
+  shopId            Int
+  shop              Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  storeId           Int
+  store             Store     @relation(fields: [storeId], references: [id])
+  saleId            Int
+  sale              Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  amount            Float
+  paidCash          Float     @default(0)
+  paidMobileBanking Float     @default(0)
+  paidCard          Float     @default(0)
+
+  collectedById     Int
+  collectedBy       ShopAdmin @relation(fields: [collectedById], references: [id])
+  createdAt         DateTime  @default(now())
+
+  @@index([shopId, createdAt])
+  @@index([storeId, createdAt])
+  @@index([saleId])
+}

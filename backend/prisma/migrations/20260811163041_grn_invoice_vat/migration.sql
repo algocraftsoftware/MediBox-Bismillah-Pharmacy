@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Grn" ADD COLUMN     "invoiceVat" DOUBLE PRECISION NOT NULL DEFAULT 0;

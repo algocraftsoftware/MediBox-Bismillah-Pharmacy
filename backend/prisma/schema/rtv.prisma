@@ -1,0 +1,80 @@
+// =======================================================
+// RETURN TO VENDOR (RTV) — returns specific VstItem
+// quantities to the supplier. Stock was already pulled from
+// sellable inventory when the VST was approved, so approving
+// an RTV is a paper-trail step only (no further Batch
+// mutation) — it records how much of each VST line was
+// actually handed back, leaving the rest as "remaining".
+// =======================================================
+
+enum RtvVia {
+  WAREHOUSE
+  HEAD_OFFICE
+}
+
+enum RtvStatus {
+  UNAPPROVED
+  APPROVED
+}
+
+model RtvCounter {
+  shopId Int @id
+  value  Int @default(0)
+}
+
+model Rtv {
+  id              Int        @id @default(autoincrement())
+  shopId          Int
+  shop            Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  storeId         Int
+  store           Store      @relation(fields: [storeId], references: [id])
+  via             RtvVia     @default(WAREHOUSE)
+  vstId           Int
+  vst             Vst        @relation(fields: [vstId], references: [id])
+  supplierId      Int
+  supplier        Supplier   @relation(fields: [supplierId], references: [id])
+  rtvNo           String
+  receiverName    String
+  receiverContact String
+  remarks         String?
+  status          RtvStatus  @default(UNAPPROVED)
+  createdById     Int
+  createdBy       ShopAdmin  @relation("RtvCreatedBy", fields: [createdById], references: [id])
+  approvedById    Int?
+  approvedBy      ShopAdmin? @relation("RtvApprovedBy", fields: [approvedById], references: [id])
+  approvedAt      DateTime?
+  totalAmount     Float      @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  items          RtvItem[]
+  grnAdjustments GrnRtvAdjustment[]
+  adjOthersItems AdjOthersItem[]
+
+  @@unique([shopId, rtvNo])
+  @@index([shopId, createdAt])
+  @@index([vstId])
+}
+
+model RtvItem {
+  id                  Int      @id @default(autoincrement())
+  rtvId               Int
+  rtv                 Rtv      @relation(fields: [rtvId], references: [id], onDelete: Cascade)
+  vstItemId           Int
+  vstItem             VstItem  @relation(fields: [vstItemId], references: [id])
+  productId           Int
+  product             Product  @relation(fields: [productId], references: [id])
+  batchNo             String
+  expiryDate          DateTime
+  packSize             Int
+  purchasePrice       Float
+  salesPrice          Float
+  itemQtyPieces       Int
+  rtvQtyPieces        Int
+  rtvValue            Float
+  remainingQtyPieces  Int
+  remainingValue      Float
+
+  @@index([rtvId])
+  @@index([vstItemId])
+}

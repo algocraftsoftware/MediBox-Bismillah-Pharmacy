@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Environment files
+.env
+.env.*
+!.env.example
+# Public (non-secret) production default for the frontend's API base URL —
+# safe to commit since NEXT_PUBLIC_ vars are exposed to the browser anyway.
+!frontend/.env.production
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Misc
+*.pem
+.vercel
+
+# Large media files
+*.mp4
+*.part
+
+# Source data files (real business data — never committed)
+*.xlsx
+*.xls
+Medicine Data.xlsx
+backend/data/

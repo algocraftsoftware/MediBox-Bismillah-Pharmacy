@@ -1,0 +1,133 @@
+// =======================================================
+// GRN WITH PO — receiving against a Final Approved Purchase
+// Order. Approving a GRN is what actually moves stock (creates
+// or tops up Batch rows); Submit only saves a pending draft.
+// =======================================================
+
+enum GrnStatus {
+  UNAPPROVED
+  APPROVED
+  CANCELED
+}
+
+// STANDARD covers both GRN With PO and GRN Without PO (already distinguished
+// by purchaseOrderId being null or not). ADJUST_WITH_PO also carries a
+// non-null purchaseOrderId (same as a standard GRN With PO), so it needs its
+// own explicit discriminator rather than relying on nullability.
+enum GrnKind {
+  STANDARD
+  ADJUST_WITH_PO
+}
+
+model GrnCounter {
+  shopId Int @id
+  value  Int @default(0)
+}
+
+// Separate counter for GRN Without PO's own "GRNW..." numbering scheme —
+// shares the Grn/GrnItem tables (purchaseOrderId is always null on these
+// rows) but is numbered independently from GRN With PO's "GRN0000001".
+model GrnwCounter {
+  shopId Int @id
+  value  Int @default(0)
+}
+
+// Separate counter for Adjust With PO's own "GRNA..." numbering scheme.
+model GrnaCounter {
+  shopId Int @id
+  value  Int @default(0)
+}
+
+model Grn {
+  id                     Int       @id @default(autoincrement())
+  shopId                 Int
+  shop                   Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  storeId                Int
+  store                  Store     @relation(fields: [storeId], references: [id])
+  supplierId             Int
+  supplier               Supplier  @relation(fields: [supplierId], references: [id])
+  purchaseOrderId        Int?
+  purchaseOrder          PurchaseRequisition? @relation(fields: [purchaseOrderId], references: [id])
+  kind                   GrnKind   @default(STANDARD)
+  // Only meaningful for ADJUST_WITH_PO rows — null for STANDARD GRNs.
+  via                    RtvVia?
+  transactionNo          String
+  invoiceNo              String
+  invoiceDate            DateTime
+  paymentType            String
+  transactionRefNo       String?
+  // Optional for GRN With PO (this field's requirement is enforced per
+  // module in the route layer, not the schema — GRN Without PO and Adjust
+  // With PO still require it in their own validation).
+  receivedById           Int?
+  receivedBy             ShopAdmin? @relation("GrnReceivedBy", fields: [receivedById], references: [id])
+  status                 GrnStatus @default(UNAPPROVED)
+  createdById            Int
+  createdBy              ShopAdmin @relation("GrnCreatedBy", fields: [createdById], references: [id])
+  approvedById           Int?
+  approvedBy             ShopAdmin? @relation("GrnApprovedBy", fields: [approvedById], references: [id])
+  approvedAt             DateTime?
+  remarks                String?
+  invoiceDiscount        Float     @default(0)
+  invoiceVat             Float     @default(0)
+  expiryAdjustmentAmount Float     @default(0)
+  attachmentUrl          String?
+  totalTradeValue        Float     @default(0)
+  totalVat               Float     @default(0)
+  totalDiscount          Float     @default(0)
+  // For ADJUST_WITH_PO rows, netAmount holds "Net Payable" — totalTradeValue
+  // + totalVat - totalDiscount - rtvAdjustmentValue — instead of the plain
+  // GRN net total; rtvAdjustmentValue stays 0/unused for the other kinds.
+  netAmount              Float     @default(0)
+  rtvAdjustmentValue     Float     @default(0)
+  avgGpPct               Float     @default(0)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  items          GrnItem[]
+  rtvAdjustments GrnRtvAdjustment[]
+
+  @@unique([shopId, transactionNo])
+  @@index([shopId, createdAt])
+}
+
+model GrnRtvAdjustment {
+  id               Int   @id @default(autoincrement())
+  grnId            Int
+  grn              Grn   @relation(fields: [grnId], references: [id], onDelete: Cascade)
+  rtvId            Int
+  rtv              Rtv   @relation(fields: [rtvId], references: [id])
+  adjustmentAmount Float
+
+  @@index([grnId])
+  @@index([rtvId])
+}
+
+model GrnItem {
+  id                      Int      @id @default(autoincrement())
+  grnId                   Int
+  grn                     Grn      @relation(fields: [grnId], references: [id], onDelete: Cascade)
+  productId               Int
+  product                 Product  @relation(fields: [productId], references: [id])
+  displayCategorySnapshot String?
+  orderQtyPieces          Int      @default(0)
+  rcvQtyBox               Float    @default(0)
+  rcvQtyPieces            Int      @default(0)
+  bonusQtyBox             Float    @default(0)
+  bonusQtyPieces          Int      @default(0)
+  totalQtyPieces          Int      @default(0)
+  tradePrice              Float    @default(0)
+  totalValue              Float    @default(0)
+  vatAmt                  Float    @default(0)
+  discAmt                 Float    @default(0)
+  unitPrice               Float    @default(0)
+  mrp                     Float    @default(0)
+  gp                      Float    @default(0)
+  gpPct                   Float    @default(0)
+  batchNo                 String?
+  expiryDate              DateTime?
+  netTotal                Float    @default(0)
+
+  @@index([grnId])
+  @@index([productId])
+}

@@ -1,0 +1,66 @@
+// =======================================================
+// VIRTUAL STOCK TRANSFER (VST) — pulls specific existing
+// batches (typically expired/damaged) out of sellable stock
+// while keeping a durable record. Approving decrements
+// Batch.stockQty. A later, separate Return-To-Vendor feature
+// is expected to eventually consume these records; not built
+// here.
+// =======================================================
+
+enum VstStatus {
+  UNAPPROVED
+  APPROVED
+}
+
+model VstCounter {
+  shopId Int @id
+  value  Int @default(0)
+}
+
+model Vst {
+  id           Int        @id @default(autoincrement())
+  shopId       Int
+  shop         Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  storeId      Int
+  store        Store      @relation(fields: [storeId], references: [id])
+  supplierId   Int
+  supplier     Supplier   @relation(fields: [supplierId], references: [id])
+  vstNo        String
+  remarks      String?
+  status       VstStatus  @default(UNAPPROVED)
+  createdById  Int
+  createdBy    ShopAdmin  @relation("VstCreatedBy", fields: [createdById], references: [id])
+  approvedById Int?
+  approvedBy   ShopAdmin? @relation("VstApprovedBy", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+  totalAmount  Float      @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  items VstItem[]
+  rtvs  Rtv[]
+
+  @@unique([shopId, vstNo])
+  @@index([shopId, createdAt])
+}
+
+model VstItem {
+  id           Int      @id @default(autoincrement())
+  vstId        Int
+  vst          Vst      @relation(fields: [vstId], references: [id], onDelete: Cascade)
+  productId    Int
+  product      Product  @relation(fields: [productId], references: [id])
+  batchNo      String
+  expiryDate   DateTime
+  packSize     Int
+  ppPerPiece   Float
+  mrpPerPiece  Float
+  existingQoh  Int
+  vstQtyPieces Int
+  totalPpValue Float
+  remarks      String?
+
+  rtvItems RtvItem[]
+
+  @@index([vstId])
+}

@@ -1,0 +1,49 @@
+{
+  "name": "medibox-backend",
+  "version": "1.0.0",
+  "description": "TypeScript Node.js Express & PostgreSQL backend for MediBox Medicine Shop System",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon --watch src -e ts --exec ts-node src/index.ts",
+    "build": "tsc",
+    "postinstall": "prisma generate",
+    "seed": "ts-node prisma/seed.ts",
+    "import:medicines": "ts-node scripts/importMedicineData.ts",
+    "backfill:dosage-dates": "ts-node scripts/backfillDosageAndDates.ts",
+    "backfill:box-qty": "ts-node scripts/backfillBoxQty.ts",
+    "db:push": "prisma db push"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "dependencies": {
+    "@prisma/client": "^5.14.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.10.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "csv-parse": "^5.5.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.6.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.11.5",
+    "prisma": "^5.14.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/multer": "^1.4.11",
+    "@types/node": "^20.12.7",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  }
+}
