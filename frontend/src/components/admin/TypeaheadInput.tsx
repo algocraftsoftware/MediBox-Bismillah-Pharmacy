@@ -5,7 +5,11 @@ import React, { useEffect, useRef, useState } from "react";
 // A type-to-filter text input — used for Mobile Banking Type / Card Type /
 // Bank Name so those behave like the Item Name search instead of a plain
 // native <select>. Free text is still accepted; suggestions just narrow.
+<<<<<<< HEAD
 // Promoted out of MediboxBillingView so Due Collection's Receive Payment modal
+=======
+// Promoted out of AsterBillingView so Due Collection's Receive Payment modal
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 // can share the same combined dropdown+search behavior (including arrow-key
 // navigation) instead of a bare native <select>/text input.
 export const TypeaheadInput: React.FC<{

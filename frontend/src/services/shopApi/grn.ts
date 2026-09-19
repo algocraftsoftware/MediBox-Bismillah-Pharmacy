@@ -1,5 +1,9 @@
 import { Grn, GrnListResponse, GrnPoPreviewItem, PurchaseOrderOption } from "../../types";
+<<<<<<< HEAD
 import { API_BASE_URL, ApiError, request } from "./http";
+=======
+import { request } from "./http";
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 export function grnApi(base: string, token: string) {
   return {
@@ -21,6 +25,7 @@ export function grnApi(base: string, token: string) {
     updateGrn: (id: number, data: Record<string, unknown>) =>
       request<Grn>(`${base}/grn/${id}`, token, { method: "PUT", body: JSON.stringify(data) }),
     approveGrn: (id: number) => request<Grn>(`${base}/grn/${id}/approve`, token, { method: "POST" }),
+<<<<<<< HEAD
     // Multipart, so no JSON Content-Type: the browser has to set its own
     // boundary or the server cannot parse the body.
     uploadGrnAttachment: async (id: number, file: File) => {
@@ -38,5 +43,7 @@ export function grnApi(base: string, token: string) {
       return (await res.json()) as Grn;
     },
     unapproveGrn: (id: number) => request<Grn>(`${base}/grn/${id}/unapprove`, token, { method: "POST" }),
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   };
 }

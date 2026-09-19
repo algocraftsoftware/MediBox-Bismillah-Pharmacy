@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db';
+<<<<<<< HEAD
 import { requireAdminRole, requirePermission, requireShopAdmin } from '../auth';
 import { adminSelect } from './purchaseRequisitionRoutes';
 import { remainingRtvAdjustableBalance } from './rtvRoutes';
@@ -7,6 +8,12 @@ import { asyncHandler } from '../asyncHandler';
 import { CLEAR_APPROVAL } from './approvalReversal';
 import { handleUpload, uploadAttachment } from '../uploads';
 import { uploadAttachmentBuffer } from '../cloudinary';
+=======
+import { requirePermission, requireShopAdmin } from '../auth';
+import { adminSelect } from './purchaseRequisitionRoutes';
+import { remainingRtvAdjustableBalance } from './rtvRoutes';
+import { asyncHandler } from '../asyncHandler';
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 // =======================================================
 // ADJUSTMENT WITH OTHERS — a lightweight credit against one
@@ -221,6 +228,7 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   res.json(updated);
 }));
 
+<<<<<<< HEAD
 // Un-approve an Adjustment Others. Approval moves no stock here — the document
 // only settles RTV value — so this is purely a status change. Its RTV lines are
 // part of the draft and stay put. Admin-only.
@@ -271,4 +279,6 @@ router.post('/:id/attachment', handleUpload(uploadAttachment.single('file')), as
   res.json(updated);
 }));
 
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 export default router;

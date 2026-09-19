@@ -1,7 +1,10 @@
 import { parse } from 'csv-parse/sync';
 import { Router } from 'express';
 import { prisma } from '../db';
+<<<<<<< HEAD
 import { asyncHandler } from '../asyncHandler';
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { requireShopAdmin } from '../auth';
 import { uploadCsv } from '../uploads';
 
@@ -12,7 +15,11 @@ router.use(requireShopAdmin);
 // CSV IMPORT (product master + opening stock, standing in for GRN)
 // =======================================================
 
+<<<<<<< HEAD
 router.post('/products/import', uploadCsv.single('file'), asyncHandler(async (req, res) => {
+=======
+router.post('/products/import', uploadCsv.single('file'), async (req, res) => {
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   if (!req.file) return res.status(400).json({ error: 'CSV file is required (field name "file")' });
   const shopId = req.shop!.id;
   const records = parse(req.file.buffer, { columns: true, skip_empty_lines: true, trim: true }) as any[];
@@ -61,9 +68,15 @@ router.post('/products/import', uploadCsv.single('file'), asyncHandler(async (re
   }
 
   res.status(201).json({ imported: created });
+<<<<<<< HEAD
 }));
 
 router.post('/batches/import', uploadCsv.single('file'), asyncHandler(async (req, res) => {
+=======
+});
+
+router.post('/batches/import', uploadCsv.single('file'), async (req, res) => {
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   if (!req.file) return res.status(400).json({ error: 'CSV file is required (field name "file")' });
   const shopId = req.shop!.id;
   const records = parse(req.file.buffer, { columns: true, skip_empty_lines: true, trim: true }) as any[];
@@ -99,6 +112,10 @@ router.post('/batches/import', uploadCsv.single('file'), asyncHandler(async (req
   }
 
   res.status(201).json({ imported: created, errors });
+<<<<<<< HEAD
 }));
+=======
+});
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 export default router;

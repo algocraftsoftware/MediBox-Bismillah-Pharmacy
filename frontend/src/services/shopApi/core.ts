@@ -24,8 +24,11 @@ export function coreApi(base: string, token: string) {
 
     getDepartments: () => request<Department[]>(`${base}/departments`, token),
     getSuppliers: () => request<Supplier[]>(`${base}/suppliers`, token),
+<<<<<<< HEAD
     createSupplier: (data: { name: string; contact?: string; address?: string; paymentMode?: string }) =>
       request<Supplier>(`${base}/suppliers`, token, { method: "POST", body: JSON.stringify(data) }),
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     getAdmins: () => request<{ id: number; name: string; username: string }[]>(`${base}/admins`, token),
 
     listSettingsAccounts: () => request<SettingsAccount[]>(`${base}/settings/accounts`, token),

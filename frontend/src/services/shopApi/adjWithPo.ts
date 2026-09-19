@@ -1,5 +1,9 @@
 import { AdjWithPo, AdjWithPoListResponse, PurchaseOrderOption, RtvAdjustOption } from "../../types";
+<<<<<<< HEAD
 import { API_BASE_URL, ApiError, request } from "./http";
+=======
+import { request } from "./http";
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 export function adjWithPoApi(base: string, token: string) {
   return {
@@ -26,6 +30,7 @@ export function adjWithPoApi(base: string, token: string) {
     updateAdjWithPo: (id: number, data: Record<string, unknown>) =>
       request<AdjWithPo>(`${base}/adj-with-po/${id}`, token, { method: "PUT", body: JSON.stringify(data) }),
     approveAdjWithPo: (id: number) => request<AdjWithPo>(`${base}/adj-with-po/${id}/approve`, token, { method: "POST" }),
+<<<<<<< HEAD
     unapproveAdjWithPo: (id: number) => request<AdjWithPo>(`${base}/adj-with-po/${id}/unapprove`, token, { method: "POST" }),
     uploadAdjWithPoAttachment: async (id: number, file: File) => {
       const body = new FormData();
@@ -41,5 +46,7 @@ export function adjWithPoApi(base: string, token: string) {
       }
       return (await res.json()) as AdjWithPo;
     },
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   };
 }

@@ -51,7 +51,11 @@ export function ShopSalesModal({ token, shop, onClose }: { token: string; shop: 
               </div>
               <div className="bg-slate-100 rounded p-3">
                 <div className="text-xs text-slate-500 font-bold">Orders</div>
+<<<<<<< HEAD
                 <div className="overflow-x-auto text-lg font-black text-slate-900">{summary.totalOrders}</div>
+=======
+                <div className="text-lg font-black text-slate-900">{summary.totalOrders}</div>
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
               </div>
             </div>
 

@@ -1,7 +1,11 @@
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import { prisma } from '../db';
+<<<<<<< HEAD
 import { requireAdminRole, requirePermission, requireShopAdmin } from '../auth';
+=======
+import { requireAdminRole, requireShopAdmin } from '../auth';
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { asyncHandler } from '../asyncHandler';
 
 const router = Router({ mergeParams: true });
@@ -11,7 +15,11 @@ router.use(requireShopAdmin);
 // SHOP / SESSION
 // =======================================================
 
+<<<<<<< HEAD
 router.get('/me', asyncHandler(async (req, res) => {
+=======
+router.get('/me', async (req, res) => {
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const admin = await prisma.shopAdmin.findUnique({ where: { id: req.auth!.sub as number } });
   res.json({
     admin: {
@@ -23,16 +31,26 @@ router.get('/me', asyncHandler(async (req, res) => {
     },
     shop: req.shop,
   });
+<<<<<<< HEAD
 }));
 
 router.get('/admins', asyncHandler(async (req, res) => {
+=======
+});
+
+router.get('/admins', async (req, res) => {
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const admins = await prisma.shopAdmin.findMany({
     where: { shopId: req.shop!.id },
     select: { id: true, name: true, username: true },
     orderBy: { name: 'asc' },
   });
   res.json(admins);
+<<<<<<< HEAD
 }));
+=======
+});
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 // =======================================================
 // SETTINGS — Admin-only username/password management for every account in
@@ -41,14 +59,22 @@ router.get('/admins', asyncHandler(async (req, res) => {
 // never creates/removes/deactivates one.
 // =======================================================
 
+<<<<<<< HEAD
 router.get('/settings/accounts', requireAdminRole, asyncHandler(async (req, res) => {
+=======
+router.get('/settings/accounts', requireAdminRole, async (req, res) => {
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const accounts = await prisma.shopAdmin.findMany({
     where: { shopId: req.shop!.id },
     select: { id: true, name: true, username: true, role: true, status: true },
     orderBy: [{ role: 'asc' }, { name: 'asc' }],
   });
   res.json(accounts);
+<<<<<<< HEAD
 }));
+=======
+});
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 router.put('/settings/accounts/:id', requireAdminRole, asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
@@ -82,12 +108,21 @@ router.put('/settings/accounts/:id', requireAdminRole, asyncHandler(async (req, 
 // ORGANIZATION: STORES / DEPARTMENTS / SUPPLIERS
 // =======================================================
 
+<<<<<<< HEAD
 router.get('/stores', asyncHandler(async (req, res) => {
   const stores = await prisma.store.findMany({ where: { shopId: req.shop!.id }, orderBy: { name: 'asc' } });
   res.json(stores);
 }));
 
 router.post('/stores', asyncHandler(async (req, res) => {
+=======
+router.get('/stores', async (req, res) => {
+  const stores = await prisma.store.findMany({ where: { shopId: req.shop!.id }, orderBy: { name: 'asc' } });
+  res.json(stores);
+});
+
+router.post('/stores', async (req, res) => {
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const { name, code, address, phone } = req.body || {};
   if (!name || !code) return res.status(400).json({ error: 'name and code are required' });
   const store = await prisma.store.create({
@@ -95,15 +130,22 @@ router.post('/stores', asyncHandler(async (req, res) => {
   });
   await prisma.invoiceCounter.create({ data: { storeId: store.id, value: 0 } });
   res.status(201).json(store);
+<<<<<<< HEAD
 }));
 
 router.get('/departments', asyncHandler(async (req, res) => {
+=======
+});
+
+router.get('/departments', async (req, res) => {
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const departments = await prisma.department.findMany({
     where: { shopId: req.shop!.id },
     include: { subDepartments: true },
     orderBy: { name: 'asc' },
   });
   res.json(departments);
+<<<<<<< HEAD
 }));
 
 router.get('/suppliers', asyncHandler(async (req, res) => {
@@ -154,5 +196,13 @@ router.post('/suppliers', requireAdminRole, asyncHandler(async (req, res) => {
   });
   res.status(201).json(supplier);
 }));
+=======
+});
+
+router.get('/suppliers', async (req, res) => {
+  const suppliers = await prisma.supplier.findMany({ where: { shopId: req.shop!.id }, orderBy: { name: 'asc' } });
+  res.json(suppliers);
+});
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 export default router;

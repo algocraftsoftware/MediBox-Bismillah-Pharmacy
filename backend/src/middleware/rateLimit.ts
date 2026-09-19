@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit';
+<<<<<<< HEAD
 import type { Request } from 'express';
 
 // =======================================================
@@ -33,11 +34,23 @@ export const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: skipHealthChecks,
+=======
+
+// Global ceiling for all /api traffic — generous enough for normal shop
+// usage (billing, dashboards polling, etc.) while blunting runaway/abusive
+// clients. Standard RateLimit-* response headers, legacy X-RateLimit-* off.
+export const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   message: { error: 'Too many requests, please try again later.' },
 });
 
 // Stricter limit on login attempts specifically, to blunt credential
 // brute-forcing without affecting normal authenticated traffic.
+<<<<<<< HEAD
 //
 // Only failed attempts count. A shop's staff sit behind one office IP, and
 // counting successes too meant a handful of people signing in normally at the
@@ -63,3 +76,12 @@ export const exportLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many downloads in a short time, please wait a moment and try again.' },
 });
+=======
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts, please try again later.' },
+});
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77

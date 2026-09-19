@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db';
+<<<<<<< HEAD
 import { requireAdminRole, requirePermission, requireShopAdmin } from '../auth';
 import { adminSelect } from './purchaseRequisitionRoutes';
 import { grnInclude, priceGrnItems } from './grnRoutes';
@@ -9,6 +10,13 @@ import { asyncHandler } from '../asyncHandler';
 import { reverseReceivedStock, unapproveError, CLEAR_APPROVAL } from './approvalReversal';
 import { handleUpload, uploadAttachment } from '../uploads';
 import { uploadAttachmentBuffer } from '../cloudinary';
+=======
+import { requirePermission, requireShopAdmin } from '../auth';
+import { adminSelect } from './purchaseRequisitionRoutes';
+import { grnInclude, priceGrnItems } from './grnRoutes';
+import { remainingRtvAdjustableBalance } from './rtvRoutes';
+import { asyncHandler } from '../asyncHandler';
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 // =======================================================
 // ADJUST WITH PO — receiving replacement stock against a
@@ -54,6 +62,7 @@ router.get('/purchase-orders', asyncHandler(async (req, res) => {
   const { storeId, supplierId, from, to } = req.query;
   const shopId = req.shop!.id;
   const where: any = { shopId, status: 'FINAL_APPROVED' };
+<<<<<<< HEAD
 
   // Only orders that have not been worked on at all. An order picked up by a
   // GRN — submitted is enough, approval is not required — or already carrying
@@ -64,6 +73,8 @@ router.get('/purchase-orders', asyncHandler(async (req, res) => {
   // also stay off an order another adjustment is already on.
   where.grns = { none: { status: { not: 'CANCELED' } } };
 
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   if (storeId) where.storeId = Number(storeId);
   if (supplierId) where.supplierId = Number(supplierId);
   if (from || to) {
@@ -190,7 +201,11 @@ router.get('/:id', asyncHandler(async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid ADJ id' });
   const grn = await prisma.grn.findFirst({
     where: { id, shopId: req.shop!.id, kind: 'ADJUST_WITH_PO' },
+<<<<<<< HEAD
     include: { ...adjWithPoInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+    include: { ...adjWithPoInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
   if (!grn) return res.status(404).json({ error: 'Adjustment not found' });
   res.json(grn);
@@ -269,7 +284,11 @@ router.post('/', asyncHandler(async (req, res) => {
             items: { create: pricedItems },
             rtvAdjustments: { create: rtvLines },
           },
+<<<<<<< HEAD
           include: { ...adjWithPoInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+          include: { ...adjWithPoInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         });
       },
       { timeout: 20000, maxWait: 10000 },
@@ -358,7 +377,11 @@ router.put('/:id', asyncHandler(async (req, res) => {
             ...(replacesItems ? { items: { create: pricedItems } } : {}),
             ...(Array.isArray(rtvAdjustments) ? { rtvAdjustments: { create: rtvLines } } : {}),
           },
+<<<<<<< HEAD
           include: { ...adjWithPoInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+          include: { ...adjWithPoInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         });
       },
       { timeout: 20000, maxWait: 10000 },
@@ -374,17 +397,25 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid ADJ id' });
   const shopId = req.shop!.id;
+<<<<<<< HEAD
   const existing = await prisma.grn.findFirst({
     where: { id, shopId, kind: 'ADJUST_WITH_PO' },
     include: {
       items: { include: { product: { select: { name: true, externalCode: true, department: { select: { name: true } } } } } },
     },
   });
+=======
+  const existing = await prisma.grn.findFirst({ where: { id, shopId, kind: 'ADJUST_WITH_PO' }, include: { items: true } });
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   if (!existing) return res.status(404).json({ error: 'Adjustment not found' });
   if (existing.status === 'APPROVED') {
     const already = await prisma.grn.findUnique({
       where: { id },
+<<<<<<< HEAD
       include: { ...adjWithPoInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+      include: { ...adjWithPoInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     });
     return res.json(already);
   }
@@ -395,6 +426,7 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   if (itemsWithQty.length === 0) {
     return res.status(400).json({ error: 'At least one item with a received quantity is required' });
   }
+<<<<<<< HEAD
   // The same non-pharma allowance a GRN has: goods that carry no batch number
   // or expiry date on the carton can be brought in without one, for the admin
   // only. Receiving stock through an adjustment is the same act as receiving it
@@ -408,30 +440,50 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
       error: `Batch Number and Expiry Date are required for ${names}${missing.length > 3 ? ` and ${missing.length - 3} more` : ''}.`
         + (isAdmin ? '' : ' Only the pharmacy admin can receive non-pharma items without them.'),
     });
+=======
+  const missingBatch = itemsWithQty.find((i) => !i.batchNo || !i.expiryDate);
+  if (missingBatch) {
+    return res.status(400).json({ error: 'Batch Number and Expiry Date are required for every received item' });
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   }
 
   const updated = await prisma.$transaction(
     async (tx) => {
       for (const item of itemsWithQty) {
+<<<<<<< HEAD
         const batch = resolveBatch(item);
         await tx.batch.upsert({
           where: {
             productId_storeId_batchNo: { productId: item.productId, storeId: existing.storeId, batchNo: batch.batchNo },
+=======
+        await tx.batch.upsert({
+          where: {
+            productId_storeId_batchNo: { productId: item.productId, storeId: existing.storeId, batchNo: item.batchNo! },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
           },
           update: {
             stockQty: { increment: item.totalQtyPieces },
             purchasePrice: item.unitPrice,
             mrp: item.mrp,
             sellingPrice: item.mrp,
+<<<<<<< HEAD
             // A fallback batch keeps the expiry it already has; only a real,
             // stated date overwrites it.
             ...(batch.isFallback ? {} : { expiryDate: batch.expiryDate }),
+=======
+            expiryDate: item.expiryDate!,
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
           },
           create: {
             productId: item.productId,
             storeId: existing.storeId,
+<<<<<<< HEAD
             batchNo: batch.batchNo,
             expiryDate: batch.expiryDate,
+=======
+            batchNo: item.batchNo!,
+            expiryDate: item.expiryDate!,
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
             mrp: item.mrp,
             purchasePrice: item.unitPrice,
             sellingPrice: item.mrp,
@@ -443,7 +495,11 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
       return tx.grn.update({
         where: { id },
         data: { status: 'APPROVED', approvedById: req.auth!.sub as number, approvedAt: new Date() },
+<<<<<<< HEAD
         include: { ...adjWithPoInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+        include: { ...adjWithPoInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       });
     },
     { timeout: 20000, maxWait: 10000 },
@@ -452,6 +508,7 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   res.json(updated);
 }));
 
+<<<<<<< HEAD
 // Un-approve an adjustment: take back the stock it received and reopen it.
 // Admin-only, for the same reason as a GRN.
 router.post('/:id/unapprove', requireAdminRole, asyncHandler(async (req, res) => {
@@ -525,4 +582,6 @@ router.post('/:id/attachment', handleUpload(uploadAttachment.single('file')), as
   res.json(updated);
 }));
 
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 export default router;

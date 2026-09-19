@@ -1,5 +1,9 @@
 import { Grn, GrnListResponse, RequisitionItemsResponse } from "../../types";
+<<<<<<< HEAD
 import { API_BASE_URL, ApiError, request } from "./http";
+=======
+import { request } from "./http";
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 export function grnWithoutPoApi(base: string, token: string) {
   return {
@@ -19,6 +23,7 @@ export function grnWithoutPoApi(base: string, token: string) {
     updateGrnw: (id: number, data: Record<string, unknown>) =>
       request<Grn>(`${base}/grn-without-po/${id}`, token, { method: "PUT", body: JSON.stringify(data) }),
     approveGrnw: (id: number) => request<Grn>(`${base}/grn-without-po/${id}/approve`, token, { method: "POST" }),
+<<<<<<< HEAD
     uploadGrnwAttachment: async (id: number, file: File) => {
       const body = new FormData();
       body.append("file", file);
@@ -34,6 +39,8 @@ export function grnWithoutPoApi(base: string, token: string) {
       return (await res.json()) as Grn;
     },
     unapproveGrnw: (id: number) => request<Grn>(`${base}/grn-without-po/${id}/unapprove`, token, { method: "POST" }),
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     cancelGrnw: (id: number) => request<Grn>(`${base}/grn-without-po/${id}/cancel`, token, { method: "POST" }),
   };
 }

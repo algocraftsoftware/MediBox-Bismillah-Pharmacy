@@ -28,8 +28,11 @@ export interface AdjOthers {
   txnNo: string;
   remarks: string | null;
   totalAdjustmentAmount: number;
+<<<<<<< HEAD
   // The supplier's document for this adjustment, once one has been attached.
   attachmentUrl: string | null;
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   status: AdjStatus;
   createdById: number;
   createdBy?: { id: number; name: string; username: string };

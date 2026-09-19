@@ -40,7 +40,10 @@ model Shop {
   products             Product[]
   customers            Customer[]
   sales                Sale[]
+<<<<<<< HEAD
   duePayments          DuePayment[]
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   setting              ShopSetting?
   customerCounter      CustomerCounter?
   purchaseRequisitions PurchaseRequisition[]
@@ -69,7 +72,10 @@ model ShopAdmin {
   updatedAt    DateTime      @updatedAt
 
   sales                 Sale[]
+<<<<<<< HEAD
   duePayments           DuePayment[]
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   requisitionsCreated   PurchaseRequisition[] @relation("RequisitionCreatedBy")
   requisitionsApproved  PurchaseRequisition[] @relation("RequisitionApprovedBy")
   ordersFinalApproved   PurchaseRequisition[] @relation("OrderFinalApprovedBy")

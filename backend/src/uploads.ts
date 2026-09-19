@@ -1,5 +1,8 @@
 import multer from 'multer';
+<<<<<<< HEAD
 import type { RequestHandler } from 'express';
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 // Vercel's serverless filesystem is read-only (aside from an ephemeral /tmp
 // that isn't shared across invocations), so uploads are kept in memory and
@@ -20,6 +23,7 @@ export const uploadCsv = multer({
   storage: memoryStorage,
   limits: { fileSize: 20 * 1024 * 1024 },
 });
+<<<<<<< HEAD
 
 // A supplier's invoice against a GRN or an adjustment — a photo, a scan, a PDF
 // or an office document, because that is the range of things suppliers actually
@@ -63,3 +67,5 @@ export function handleUpload(middleware: RequestHandler): RequestHandler {
     });
   };
 }
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77

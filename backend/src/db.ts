@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import os from 'os';
 import { PrismaClient } from '@prisma/client';
 
@@ -40,14 +41,22 @@ function pooledUrl(): string | undefined {
   }
 }
 
+=======
+import { PrismaClient } from '@prisma/client';
+
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 // Reuse a single PrismaClient across invocations in serverless environments
 // (Vercel) instead of opening a fresh connection pool on every cold start.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
+<<<<<<< HEAD
 function createClient(): PrismaClient {
   const url = pooledUrl();
   return url ? new PrismaClient({ datasources: { db: { url } } }) : new PrismaClient();
 }
 
 export const prisma = globalForPrisma.prisma ?? createClient();
+=======
+export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 globalForPrisma.prisma = prisma;

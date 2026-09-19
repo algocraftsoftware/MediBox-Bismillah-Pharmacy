@@ -15,7 +15,10 @@ model Store {
   batches         Batch[]
   customers       Customer[]
   sales           Sale[]
+<<<<<<< HEAD
   duePayments     DuePayment[]
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   invoiceCounter  InvoiceCounter?
   requisitions    PurchaseRequisition[] @relation("RequisitionStore")
   ordersDeliveredTo PurchaseRequisition[] @relation("OrderDeliverToStore")
@@ -57,10 +60,13 @@ model Supplier {
   name    String
   contact String?
   address String?
+<<<<<<< HEAD
   // How this vendor is normally settled (Cash, Credit, Cheque...). Free text
   // rather than an enum: shops describe their terms in their own words, and a
   // fixed list would only be wrong for somebody.
   paymentMode String?
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
   products     Product[]
   requisitions PurchaseRequisition[]

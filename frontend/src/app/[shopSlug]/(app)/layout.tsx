@@ -3,8 +3,13 @@
 import { usePathname } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
 import { ShopSessionProvider, useShopSession } from "../../../context/ShopSessionContext";
+<<<<<<< HEAD
 import { MediboxHeader } from "../../../components/admin/MediboxHeader";
 import { ADMIN_ONLY_MENU_FEATURES, ALL_FEATURE_IDS } from "../../../lib/menuFeatures";
+=======
+import { AsterHeader } from "../../../components/admin/AsterHeader";
+import { ALL_FEATURE_IDS } from "../../../lib/menuFeatures";
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 function Shell({ children }: { children: React.ReactNode }) {
   const session = useShopSession();
@@ -17,6 +22,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   // A known feature is open only when it's been granted — for ADMIN accounts
   // too, so a feature the Super Admin restricted is actually unreachable and
   // not just hidden from the menu (typing its URL lands on Access Restricted).
+<<<<<<< HEAD
   // Settings and the admin-only menu items are not grantable features, so they
   // are gated on the role instead — and gated here, not just hidden from the
   // menu, so typing the URL lands on Access Restricted rather than the screen.
@@ -30,13 +36,26 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col h-screen bg-[#f8fafc] text-slate-900 font-sans overflow-hidden">
       <MediboxHeader
+=======
+  const hasAccess =
+    activeRoute === "settings"
+      ? session.adminRole === "ADMIN"
+      : !ALL_FEATURE_IDS.includes(activeRoute) || session.permissions.includes(activeRoute);
+
+  return (
+    <div className="flex flex-col h-screen bg-[#f8fafc] text-slate-900 font-sans overflow-hidden">
+      <AsterHeader
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         shopSlug={session.shopSlug}
         activeRoute={activeRoute}
         shopName={session.shopName}
         logoUrl={session.logoUrl}
         adminName={session.adminName}
         permissions={session.permissions}
+<<<<<<< HEAD
         adminRole={session.adminRole}
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         stores={session.stores}
         selectedStoreId={session.selectedStoreId}
         setSelectedStoreId={session.setSelectedStoreId}

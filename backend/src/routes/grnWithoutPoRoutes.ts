@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db';
+<<<<<<< HEAD
 import { requireAdminRole, requirePermission, requireShopAdmin } from '../auth';
 import { grnInclude, priceGrnItems } from './grnRoutes';
 import { linesMissingBatch, resolveBatch } from './receivedBatch';
@@ -7,6 +8,11 @@ import { asyncHandler } from '../asyncHandler';
 import { handleUpload, uploadAttachment } from '../uploads';
 import { uploadAttachmentBuffer } from '../cloudinary';
 import { reverseReceivedStock, unapproveError, CLEAR_APPROVAL } from './approvalReversal';
+=======
+import { requirePermission, requireShopAdmin } from '../auth';
+import { grnInclude, priceGrnItems } from './grnRoutes';
+import { asyncHandler } from '../asyncHandler';
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 // =======================================================
 // GRN WITHOUT PO — same Grn/GrnItem tables as GRN With PO,
@@ -122,7 +128,11 @@ router.get('/:id', asyncHandler(async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid GRN id' });
   const grn = await prisma.grn.findFirst({
     where: { id, shopId: req.shop!.id, purchaseOrderId: null },
+<<<<<<< HEAD
     include: { ...grnInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+    include: { ...grnInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
   if (!grn) return res.status(404).json({ error: 'GRN not found' });
   res.json(grn);
@@ -204,7 +214,11 @@ router.post('/', asyncHandler(async (req, res) => {
           createdById: req.auth!.sub as number,
           items: pricedItems.length ? { create: pricedItems } : undefined,
         },
+<<<<<<< HEAD
         include: { ...grnInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+        include: { ...grnInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       });
     },
     { timeout: 20000, maxWait: 10000 },
@@ -278,7 +292,11 @@ router.put('/:id', asyncHandler(async (req, res) => {
             ? { totalTradeValue, totalVat, totalDiscount, netAmount, avgGpPct, items: { create: pricedItems } }
             : {}),
         },
+<<<<<<< HEAD
         include: { ...grnInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+        include: { ...grnInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       });
     },
     { timeout: 20000, maxWait: 10000 },
@@ -293,15 +311,23 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   const shopId = req.shop!.id;
   const existing = await prisma.grn.findFirst({
     where: { id, shopId, purchaseOrderId: null },
+<<<<<<< HEAD
     include: {
       items: { include: { product: { select: { name: true, externalCode: true, department: { select: { name: true } } } } } },
     },
+=======
+    include: { items: true },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
   if (!existing) return res.status(404).json({ error: 'GRN not found' });
   if (existing.status === 'APPROVED') {
     const already = await prisma.grn.findUnique({
       where: { id },
+<<<<<<< HEAD
       include: { ...grnInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+      include: { ...grnInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     });
     return res.json(already);
   }
@@ -315,6 +341,7 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   if (itemsWithQty.length === 0) {
     return res.status(400).json({ error: 'At least one item with a received quantity is required' });
   }
+<<<<<<< HEAD
   // Same non-pharma allowance as GRN With PO — receiving goods is the same
   // operation whether or not a purchase order preceded it.
   const auth = req.auth!;
@@ -326,28 +353,48 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
       error: `Batch Number and Expiry Date are required for ${names}${missing.length > 3 ? ` and ${missing.length - 3} more` : ''}.`
         + (isAdmin ? '' : ' Only the pharmacy admin can receive non-pharma items without them.'),
     });
+=======
+  const missingBatch = itemsWithQty.find((i) => !i.batchNo || !i.expiryDate);
+  if (missingBatch) {
+    return res.status(400).json({ error: 'Batch Number and Expiry Date are required for every received item' });
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   }
 
   const updated = await prisma.$transaction(
     async (tx) => {
       for (const item of itemsWithQty) {
+<<<<<<< HEAD
         const batch = resolveBatch(item);
         await tx.batch.upsert({
           where: {
             productId_storeId_batchNo: { productId: item.productId, storeId: existing.storeId, batchNo: batch.batchNo },
+=======
+        await tx.batch.upsert({
+          where: {
+            productId_storeId_batchNo: { productId: item.productId, storeId: existing.storeId, batchNo: item.batchNo! },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
           },
           update: {
             stockQty: { increment: item.totalQtyPieces },
             purchasePrice: item.unitPrice,
             mrp: item.mrp,
             sellingPrice: item.mrp,
+<<<<<<< HEAD
             ...(batch.isFallback ? {} : { expiryDate: batch.expiryDate }),
+=======
+            expiryDate: item.expiryDate!,
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
           },
           create: {
             productId: item.productId,
             storeId: existing.storeId,
+<<<<<<< HEAD
             batchNo: batch.batchNo,
             expiryDate: batch.expiryDate,
+=======
+            batchNo: item.batchNo!,
+            expiryDate: item.expiryDate!,
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
             mrp: item.mrp,
             purchasePrice: item.unitPrice,
             sellingPrice: item.mrp,
@@ -359,7 +406,11 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
       return tx.grn.update({
         where: { id },
         data: { status: 'APPROVED', approvedById: req.auth!.sub as number, approvedAt: new Date() },
+<<<<<<< HEAD
         include: { ...grnInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+        include: { ...grnInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       });
     },
     { timeout: 20000, maxWait: 10000 },
@@ -381,12 +432,17 @@ router.post('/:id/cancel', asyncHandler(async (req, res) => {
   const updated = await prisma.grn.update({
     where: { id },
     data: { status: 'CANCELED' },
+<<<<<<< HEAD
     include: { ...grnInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
+=======
+    include: { ...grnInclude, items: { include: { product: true } } },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
 
   res.json(updated);
 }));
 
+<<<<<<< HEAD
 // Un-approve a GRN: take the received stock back out and reopen the document
 // for editing. Admin-only — this moves stock, so it is not something a staff
 // account may do even when it can otherwise use the GRN screen.
@@ -462,4 +518,6 @@ router.post('/:id/attachment', handleUpload(uploadAttachment.single('file')), as
   res.json(updated);
 }));
 
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 export default router;

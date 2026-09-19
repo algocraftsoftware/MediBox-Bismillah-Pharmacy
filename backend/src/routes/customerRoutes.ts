@@ -10,7 +10,11 @@ router.use(requireShopAdmin);
 // CUSTOMERS
 // =======================================================
 
+<<<<<<< HEAD
 router.get('/customers', requirePermission('customer-registration', 'billing'), asyncHandler(async (req, res) => {
+=======
+router.get('/customers', requirePermission('customer-registration', 'billing'), async (req, res) => {
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const { storeId, custType, gender, customerCode, mobile, employeeId, q } = req.query;
   const where: any = { shopId: req.shop!.id };
   if (storeId) where.storeId = Number(storeId);
@@ -41,9 +45,15 @@ router.get('/customers', requirePermission('customer-registration', 'billing'), 
     take: 200,
   });
   res.json(customers);
+<<<<<<< HEAD
 }));
 
 router.post('/customers', requirePermission('customer-registration', 'billing'), asyncHandler(async (req, res) => {
+=======
+});
+
+router.post('/customers', requirePermission('customer-registration', 'billing'), async (req, res) => {
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const {
     storeId,
     custType,
@@ -129,7 +139,11 @@ router.post('/customers', requirePermission('customer-registration', 'billing'),
     console.error('Customer registration failed:', err);
     return res.status(500).json({ error: 'Could not register customer. Please try again.' });
   }
+<<<<<<< HEAD
 }));
+=======
+});
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 router.put('/customers/:id', requirePermission('customer-registration', 'billing'), asyncHandler(async (req, res) => {
   const id = Number(req.params.id);

@@ -36,7 +36,11 @@ async function main() {
   const shop = await prisma.shop.upsert({
     where: { slug: 'shop' },
     update: {},
+<<<<<<< HEAD
     create: { code: 'MEDIBOX001', name: 'Medibox Pharmacy Bangladesh', slug: 'shop' },
+=======
+    create: { code: 'ASTER001', name: 'Aster Pharmacy Bangladesh', slug: 'shop' },
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
 
   await prisma.shopSetting.upsert({

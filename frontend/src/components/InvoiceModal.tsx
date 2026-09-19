@@ -46,12 +46,16 @@ function amountInWords(amount: number): string {
 }
 
 export const InvoiceModal: React.FC<InvoiceModalProps> = ({ sale, onClose }) => {
+<<<<<<< HEAD
   const { shopName, shopAddress, shopPhone, logoUrl } = useShopSession();
   // The Super Admin sets these on the shop; the store row is only a fallback so
   // a receipt never prints a blank letterhead.
   const receiptShopName = shopName || sale.store?.name || "";
   const receiptAddress = shopAddress || sale.store?.address || "";
   const receiptPhone = shopPhone || sale.store?.phone || "";
+=======
+  const { shopName, logoUrl } = useShopSession();
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const handlePrint = () => window.print();
 
   const created = new Date(sale.createdAt);
@@ -110,6 +114,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ sale, onClose }) => 
             word-break: break-word;
             overflow-wrap: break-word;
           }
+<<<<<<< HEAD
           /* A thermal head has no greyscale: it either burns a dot or it
              doesn't, so slate-600/700 text came out as a sparse stipple that
              was effectively unreadable (Conditions Apply, Srvd by, Powered
@@ -130,6 +135,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ sale, onClose }) => 
             font-weight: 600 !important;
             line-height: 1.45 !important;
           }
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         }
       `}</style>
       <div id="invoice-modal-card" className="bg-white border border-slate-300 rounded-xl max-w-sm w-full p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -146,10 +153,15 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ sale, onClose }) => 
         <div id="printable-receipt" className="bg-white text-slate-900 p-3 border border-slate-300 rounded-lg text-[11px] font-semibold space-y-2">
           <div className="text-center pb-2 relative">
             {logoUrl && <img src={logoUrl} alt={shopName} className="absolute right-0 top-0 h-9 w-auto object-contain" />}
+<<<<<<< HEAD
             <h2 className="text-base font-black tracking-tight text-slate-900 uppercase">{receiptShopName}</h2>
             {receiptAddress && <p className="text-[10px] text-slate-700 font-bold">{receiptAddress}</p>}
             {receiptPhone && <p className="text-[10px] text-slate-700 font-bold">Phone: {receiptPhone}</p>}
             {sale.store?.name && <p className="text-[10px] text-slate-700 font-bold">{sale.store.name}</p>}
+=======
+            <h2 className="text-base font-black tracking-tight text-slate-900 uppercase">{shopName}</h2>
+            {sale.store?.name && <p className="text-[10px] text-slate-600 font-bold">{sale.store.name}</p>}
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
           </div>
 
           <div className="border-t border-b border-dashed border-slate-400 py-1.5 space-y-0.5">
@@ -229,7 +241,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ sale, onClose }) => 
             </div>
           </div>
 
+<<<<<<< HEAD
           <div className="receipt-fineprint border-t border-dashed border-slate-400 pt-1.5 text-[9px] text-slate-800 space-y-0.5">
+=======
+          <div className="border-t border-dashed border-slate-400 pt-1.5 text-[9px] text-slate-600 space-y-0.5">
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
             <p className="font-black text-slate-800">Conditions Apply :</p>
             <p>1. We don&apos;t receive return / exchange after 72 hours of sold</p>
             <p>2. Without invoice copy no return or exchange is applicable</p>
@@ -239,8 +255,13 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ sale, onClose }) => 
             <p>6. Return Policy: instead of cash, product exchange is applicable</p>
           </div>
 
+<<<<<<< HEAD
           <div className="receipt-fineprint text-center pt-1.5 space-y-0.5 text-slate-800 text-[10px]">
             <p className="font-black text-slate-900">Thanks For Coming At {receiptShopName}</p>
+=======
+          <div className="text-center pt-1.5 space-y-0.5 text-slate-700 text-[10px]">
+            <p className="font-black text-slate-900">Thanks For Coming At {shopName}</p>
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
             <p>Srvd by : {sale.cashier?.name || ""}</p>
             <p>Powered by Algo Craft Software LTD</p>
             <p>{created.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} {created.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true })}</p>
@@ -248,7 +269,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ sale, onClose }) => 
           </div>
 
           {(sale.store?.address || sale.store?.phone) && (
+<<<<<<< HEAD
             <div className="receipt-fineprint border-t border-dashed border-slate-400 pt-1.5 text-center text-[9px] text-slate-800">
+=======
+            <div className="border-t border-dashed border-slate-400 pt-1.5 text-center text-[9px] text-slate-600">
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
               {sale.store?.name ? `${sale.store.name}: ` : ""}
               {sale.store?.address}
               {sale.store?.phone ? `, Phone: ${sale.store.phone}` : ""}

@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+<<<<<<< HEAD
 import { ShieldCheck, LogOut, Store as StoreIcon, Plus, Users } from "lucide-react";
+=======
+import { ShieldCheck, LogOut, Store as StoreIcon, Plus } from "lucide-react";
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { session } from "../../../services/api";
 
 // Persistent header + left sidebar for every super admin page except the
@@ -25,7 +29,10 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   if (!ready) return null;
 
   const isEnrollNew = pathname === "/superadmin/shops/new";
+<<<<<<< HEAD
   const isContacts = pathname === "/superadmin/contacts";
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
@@ -51,7 +58,11 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           <button
             onClick={() => router.push("/superadmin")}
             className={`w-full flex items-center gap-2.5 font-bold text-sm px-3 py-2.5 rounded-lg ${
+<<<<<<< HEAD
               isEnrollNew || isContacts ? "bg-white hover:bg-slate-100 text-slate-700" : "bg-emerald-50 text-emerald-800"
+=======
+              isEnrollNew ? "bg-white hover:bg-slate-100 text-slate-700" : "bg-emerald-50 text-emerald-800"
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
             }`}
           >
             <StoreIcon className="w-4 h-4" />
@@ -68,6 +79,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             <Plus className="w-4 h-4" />
             Enroll New Shop
           </button>
+<<<<<<< HEAD
           <button
             onClick={() => router.push("/superadmin/contacts")}
             className={`w-full flex items-center gap-2.5 font-bold text-sm px-3 py-2.5 rounded-lg ${
@@ -77,6 +89,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
             <Users className="w-4 h-4" />
             Contact List
           </button>
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         </aside>
 
         <main className="flex-1 min-w-0">{children}</main>

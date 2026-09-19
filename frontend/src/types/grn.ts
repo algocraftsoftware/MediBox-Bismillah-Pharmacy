@@ -50,9 +50,12 @@ export interface GrnItem {
     genericName: string | null;
     unit: string;
     boxQty: number;
+<<<<<<< HEAD
     // Carried so the grid knows which lines may be received without a batch
     // number or expiry date — see the non-pharma rule in the GRN views.
     department?: { name: string } | null;
+=======
+>>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   };
   displayCategorySnapshot: string | null;
   orderQtyPieces: number;
