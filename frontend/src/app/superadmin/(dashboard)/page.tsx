@@ -6,10 +6,7 @@ import { Store as StoreIcon, Users, TrendingUp, X, Pill, Pencil, Trash2, Search,
 import { session, superAdminApi } from "../../../services/api";
 import { ShopSummary, PlatformStats } from "../../../types";
 import { ShopSalesModal } from "../../../components/superadmin/ShopSalesModal";
-<<<<<<< HEAD
 import { Spinner } from "../../../components/Spinner";
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 function toInputDate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -32,13 +29,10 @@ function SuperAdminDashboard() {
   const [salesModalShop, setSalesModalShop] = useState<ShopSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingShops, setLoadingShops] = useState(true);
-<<<<<<< HEAD
   // Which shop is mid-delete. Removing a shop clears every one of its tables,
   // so it is not instant — without this the button looked inert and invited a
   // second click on a destructive action.
   const [deletingShopId, setDeletingShopId] = useState<number | null>(null);
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const toast = searchParams.get("toast");
   const [searchId, setSearchId] = useState("");
   const [from, setFrom] = useState(toInputDate(new Date(new Date().setDate(1))));
@@ -268,7 +262,6 @@ function SuperAdminDashboard() {
                   {shop.status === "ACTIVE" ? "Unpublish" : "Publish"}
                 </button>
                 <button
-<<<<<<< HEAD
                   disabled={deletingShopId !== null}
                   onClick={async () => {
                     if (!window.confirm(`Delete "${shop.name}" and ALL of its data? This cannot be undone.`)) return;
@@ -302,17 +295,6 @@ function SuperAdminDashboard() {
                       Delete
                     </>
                   )}
-=======
-                  onClick={async () => {
-                    if (!window.confirm(`Delete "${shop.name}" and ALL of its data? This cannot be undone.`)) return;
-                    await superAdminApi.deleteShop(token, shop.id);
-                    refresh(token);
-                  }}
-                  className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs py-2 rounded flex items-center justify-center gap-1"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  Delete
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
                 </button>
               </div>
             </div>

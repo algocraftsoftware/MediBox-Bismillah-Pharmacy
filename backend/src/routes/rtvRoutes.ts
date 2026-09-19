@@ -1,15 +1,9 @@
 import { Router } from 'express';
 import { prisma } from '../db';
-<<<<<<< HEAD
 import { requireAdminRole, requirePermission, requireShopAdmin } from '../auth';
 import { adminSelect } from './purchaseRequisitionRoutes';
 import { asyncHandler } from '../asyncHandler';
 import { CLEAR_APPROVAL } from './approvalReversal';
-=======
-import { requirePermission, requireShopAdmin } from '../auth';
-import { adminSelect } from './purchaseRequisitionRoutes';
-import { asyncHandler } from '../asyncHandler';
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 const router = Router({ mergeParams: true });
 router.use(requireShopAdmin);
@@ -99,11 +93,7 @@ router.get('/vst/:vstId/items', asyncHandler(async (req, res) => {
 
   const vst = await prisma.vst.findFirst({
     where: { id: vstId, shopId, status: 'APPROVED' },
-<<<<<<< HEAD
     include: { items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-    include: { items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
   if (!vst) return res.status(404).json({ error: 'Approved VST not found' });
 
@@ -200,11 +190,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid RTV id' });
   const rtv = await prisma.rtv.findFirst({
     where: { id, shopId: req.shop!.id },
-<<<<<<< HEAD
     include: { ...rtvInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-    include: { ...rtvInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
   if (!rtv) return res.status(404).json({ error: 'RTV not found' });
   res.json(rtv);
@@ -300,11 +286,7 @@ router.post('/', asyncHandler(async (req, res) => {
             totalAmount,
             items: { create: pricedItems.filter((i) => i.rtvQtyPieces > 0) },
           },
-<<<<<<< HEAD
           include: { ...rtvInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-          include: { ...rtvInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         });
       },
       { timeout: 20000, maxWait: 10000 },
@@ -348,11 +330,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
               ? { totalAmount, items: { create: pricedItems.filter((i) => i.rtvQtyPieces > 0) } }
               : {}),
           },
-<<<<<<< HEAD
           include: { ...rtvInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-          include: { ...rtvInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         });
       },
       { timeout: 20000, maxWait: 10000 },
@@ -375,11 +353,7 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   if (existing.status === 'APPROVED') {
     const already = await prisma.rtv.findUnique({
       where: { id },
-<<<<<<< HEAD
       include: { ...rtvInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-      include: { ...rtvInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     });
     return res.json(already);
   }
@@ -390,17 +364,12 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   const updated = await prisma.rtv.update({
     where: { id },
     data: { status: 'APPROVED', approvedById: req.auth!.sub as number, approvedAt: new Date() },
-<<<<<<< HEAD
     include: { ...rtvInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-    include: { ...rtvInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
 
   res.json(updated);
 }));
 
-<<<<<<< HEAD
 // Un-approve an RTV. Approving one changes no stock — the goods already left
 // on the VST — so this is a status change, guarded on what has been settled
 // against it. Admin-only, to keep the approval trail in one pair of hands.
@@ -434,6 +403,4 @@ router.post('/:id/unapprove', requireAdminRole, asyncHandler(async (req, res) =>
   res.json(updated);
 }));
 
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 export default router;

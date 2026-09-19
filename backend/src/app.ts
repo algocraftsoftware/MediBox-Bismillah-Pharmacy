@@ -10,11 +10,8 @@ import authRoutes from './routes/authRoutes';
 import superadminRoutes from './routes/superadminRoutes';
 import shopRoutes from './routes/shopRoutes';
 import stockDataRoutes from './routes/stockDataRoutes';
-<<<<<<< HEAD
 import stockReportRoutes from './routes/stockReportRoutes';
 import financeRoutes from './routes/financeRoutes';
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import billingRoutes from './routes/billingRoutes';
 import customerRoutes from './routes/customerRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
@@ -39,7 +36,6 @@ const devOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
 const corsOrigins = allowedOrigins ? [...new Set([...allowedOrigins, ...devOrigins])] : undefined;
 
 const app = express();
-<<<<<<< HEAD
 
 // Vercel serves this behind its own proxy, so the client's address arrives in
 // X-Forwarded-For rather than on the socket. Without this, req.ip is the
@@ -50,8 +46,6 @@ const app = express();
 // to run under a permissive `true`).
 app.set('trust proxy', 1);
 
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 app.use(cors(corsOrigins ? { origin: corsOrigins } : undefined));
 app.use(compression());
 app.use(express.json());
@@ -64,11 +58,8 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api/shops/:slug', shopRoutes);
 app.use('/api/shops/:slug', stockDataRoutes);
-<<<<<<< HEAD
 app.use('/api/shops/:slug', stockReportRoutes);
 app.use('/api/shops/:slug', financeRoutes);
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 app.use('/api/shops/:slug', billingRoutes);
 app.use('/api/shops/:slug', customerRoutes);
 app.use('/api/shops/:slug', dashboardRoutes);

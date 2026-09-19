@@ -3,10 +3,7 @@ import * as XLSX from 'xlsx';
 import { prisma } from '../db';
 import { requirePermission, requireShopAdmin } from '../auth';
 import { asyncHandler } from '../asyncHandler';
-<<<<<<< HEAD
 import { exportLimiter } from '../middleware/rateLimit';
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 const router = Router({ mergeParams: true });
 router.use(requireShopAdmin);
@@ -581,11 +578,7 @@ router.get('/reports/sales', requirePermission('sales-report'), asyncHandler(asy
   res.json({ reportName: name, ledgerRows });
 }));
 
-<<<<<<< HEAD
 router.get('/reports/sales/export', requirePermission('sales-report'), exportLimiter, asyncHandler(async (req, res) => {
-=======
-router.get('/reports/sales/export', requirePermission('sales-report'), asyncHandler(async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const shopId = req.shop!.id;
   const { reportName, storeId, shift, cashierId, from, to } = req.query as Record<string, string | undefined>;
   const name = String(reportName || 'INVOICE_WISE_DETAILS');

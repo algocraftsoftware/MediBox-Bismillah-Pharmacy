@@ -15,10 +15,7 @@ import {
   shopSessionRetrying,
   shopSessionStoreSelected,
 } from "../store/shopSessionSlice";
-<<<<<<< HEAD
 import { lookupsCleared } from "../store/lookupsSlice";
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 const MAX_SESSION_LOAD_ATTEMPTS = 4;
 
@@ -65,12 +62,9 @@ export function useShopSession(): ShopSessionValue {
     setSelectedStoreId: (id: number) => dispatch(shopSessionStoreSelected(id)),
     logout: () => {
       session.clearShopAdmin();
-<<<<<<< HEAD
       // Drop this shop's cached supplier/department/staff lists too, so signing
       // in as a different shop on the same browser starts from its own data.
       dispatch(lookupsCleared({ shopSlug: params.shopSlug }));
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       router.replace(`/${params.shopSlug}/login`);
     },
   };

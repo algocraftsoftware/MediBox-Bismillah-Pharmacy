@@ -26,10 +26,7 @@ export function purchaseRequisitionApi(base: string, token: string) {
       }),
     approveRequisition: (id: number) =>
       request<PurchaseRequisition>(`${base}/purchase-requisitions/${id}/approve`, token, { method: "POST" }),
-<<<<<<< HEAD
     unapproveRequisition: (id: number) =>
       request<PurchaseRequisition>(`${base}/purchase-requisitions/${id}/unapprove`, token, { method: "POST" }),
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   };
 }

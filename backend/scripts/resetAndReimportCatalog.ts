@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 import '../src/env';
 import path from 'path';
 import fs from 'fs';
-=======
-import path from 'path';
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { PrismaClient } from '@prisma/client';
 import * as XLSX from 'xlsx';
 
@@ -266,14 +262,10 @@ async function importReferenceBatches(shopId: number, storeIds: number[], cleanR
 }
 
 async function main() {
-<<<<<<< HEAD
   let filePath = path.join(__dirname, '..', 'assets', 'TOTAL STK DATA.xlsx');
   if (!fs.existsSync(filePath)) {
     filePath = path.join(__dirname, '..', '..', 'TOTAL STK DATA.xlsx');
   }
-=======
-  const filePath = path.join(__dirname, '..', 'assets', 'TOTAL STK DATA.xlsx');
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   console.log(`Reading ${filePath} ...`);
   const workbook = XLSX.readFile(filePath);
   const sheet = workbook.Sheets[workbook.SheetNames[0]];

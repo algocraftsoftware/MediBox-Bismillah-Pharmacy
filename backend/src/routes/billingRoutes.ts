@@ -3,11 +3,8 @@ import * as XLSX from 'xlsx';
 import { prisma } from '../db';
 import { requirePermission, requireShopAdmin } from '../auth';
 import { asyncHandler } from '../asyncHandler';
-<<<<<<< HEAD
 import { fallbackBatchNo } from './receivedBatch';
 import { exportLimiter } from '../middleware/rateLimit';
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 const router = Router({ mergeParams: true });
 router.use(requireShopAdmin);
@@ -16,11 +13,7 @@ router.use(requireShopAdmin);
 // PRODUCT / BATCH SEARCH (typeahead, tuned for 20k+ rows)
 // =======================================================
 
-<<<<<<< HEAD
 router.get('/products/search', requirePermission('billing'), asyncHandler(async (req, res) => {
-=======
-router.get('/products/search', requirePermission('billing'), async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const { q, storeId } = req.query;
   if (!storeId) return res.status(400).json({ error: 'storeId is required' });
   const query = String(q || '').trim();
@@ -28,7 +21,6 @@ router.get('/products/search', requirePermission('billing'), async (req, res) =>
 
   const rows = await prisma.$queryRaw<any[]>`
     SELECT
-<<<<<<< HEAD
       b.id as "batchId",
       -- Goods received without a batch number or expiry date (non-pharma, see
       -- receivedBatch.ts) are held in a generated "OPEN-<item code>" batch with
@@ -38,9 +30,6 @@ router.get('/products/search', requirePermission('billing'), async (req, res) =>
       CASE WHEN b."batchNo" = 'OPEN-' || p."externalCode" THEN NULL ELSE b."batchNo" END as "batchNo",
       CASE WHEN b."batchNo" = 'OPEN-' || p."externalCode" THEN NULL ELSE b."expiryDate" END as "expiryDate",
       b.mrp, b."sellingPrice", b."purchasePrice",
-=======
-      b.id as "batchId", b."batchNo", b."expiryDate", b.mrp, b."sellingPrice", b."purchasePrice",
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       b."vatPct", b."discPct", b."stockQty", b.barcode,
       p.id as "productId", p.name as "productName", p."genericName", p.unit,
       p."isPrescriptionRequired", p."controlledClass", p."displayCategory",
@@ -59,15 +48,9 @@ router.get('/products/search', requirePermission('billing'), async (req, res) =>
     LIMIT 20
   `;
   res.json(rows);
-<<<<<<< HEAD
 }));
 
 router.get('/products/by-barcode/:barcode', requirePermission('billing'), asyncHandler(async (req, res) => {
-=======
-});
-
-router.get('/products/by-barcode/:barcode', requirePermission('billing'), async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const { storeId } = req.query;
   if (!storeId) return res.status(400).json({ error: 'storeId is required' });
 
@@ -82,7 +65,6 @@ router.get('/products/by-barcode/:barcode', requirePermission('billing'), async 
     include: { product: { include: { department: true, defaultSupplier: true } } },
   });
   if (!batch) return res.status(404).json({ error: 'No product found for this barcode' });
-<<<<<<< HEAD
 
   // Same placeholder suppression as the search above, so scanning a barcode and
   // searching by name present the item identically.
@@ -90,10 +72,6 @@ router.get('/products/by-barcode/:barcode', requirePermission('billing'), async 
     && batch.batchNo === fallbackBatchNo(batch.product.externalCode);
   res.json(isFallback ? { ...batch, batchNo: null, expiryDate: null } : batch);
 }));
-=======
-  res.json(batch);
-});
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 // =======================================================
 // SALES / BILLING
@@ -112,7 +90,6 @@ function resolveShift(): 'MORNING' | 'EVENING' {
 //    non-pharma just needs to retain a flat ৳30+ gross profit per line.
 //  - Everyone else (General/Employee/Other): pharma needs a resulting
 //    margin of at least 3%, or 5% if the item's own undiscounted margin is
-<<<<<<< HEAD
 //    already ≥15%; non-pharma needs at least 9%, whatever its undiscounted
 //    margin. A narrow carve-out: items whose undiscounted margin sits in the
 //    5–8% band may take a flat ৳15–30 discount even if that would otherwise
@@ -128,12 +105,6 @@ function resolveShift(): 'MORNING' | 'EVENING' {
 //      g = 50%  → up to 45% off
 //      g = 7–8% → the 5–8% carve-out above, not this floor: a 2–3% discount
 //                 goes through as long as the line's own discount stays ≤৳30
-=======
-//    already ≥15%; non-pharma needs at least 13%, or 15% if its undiscounted
-//    margin is already ≥20%. A narrow carve-out: items whose undiscounted
-//    margin sits in the 5–8% band may take a flat ৳15–30 discount even if
-//    that would otherwise dip under the percentage floor.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 // Returns an error string (sale must be rejected) or null (allowed).
 function evaluateMarginFloor(params: {
   custType: string;
@@ -187,11 +158,7 @@ function evaluateMarginFloor(params: {
       return `${productName}: discount would drop the margin to ${finalGpPct.toFixed(1)}%, below the ${floor}% minimum for pharma items`;
     }
   } else {
-<<<<<<< HEAD
     const floor = 9;
-=======
-    const floor = baselineGpPct >= 20 ? 15 : 13;
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     if (finalGpPct < floor - 0.01) {
       return `${productName}: discount would drop the margin to ${finalGpPct.toFixed(1)}%, below the ${floor}% minimum for non-pharma items`;
     }
@@ -280,7 +247,6 @@ router.post('/sales', requirePermission('billing'), asyncHandler(async (req, res
           productNameSnapshot: batch.product.name,
           departmentSnapshot: batch.product.department.name,
           supplierSnapshot: batch.product.defaultSupplier?.name || null,
-<<<<<<< HEAD
           // A generated placeholder is not a batch number anyone can act on, so
           // it is not carried onto the sale line either — the invoice and the
           // ledger would otherwise print it. Traceability is unaffected: the
@@ -289,9 +255,6 @@ router.post('/sales', requirePermission('billing'), asyncHandler(async (req, res
             && batch.batchNo === fallbackBatchNo(batch.product.externalCode)
             ? ''
             : batch.batchNo,
-=======
-          batchNoSnapshot: batch.batchNo,
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
           uom: batch.product.unit,
           mrp: batch.mrp,
           qty,
@@ -572,11 +535,7 @@ router.get('/sales/organizations', requirePermission('sales-report', 'invoice-li
   res.json(rows.map((r) => r.orgName).filter((v): v is string => Boolean(v && v.trim())));
 }));
 
-<<<<<<< HEAD
 router.get('/sales/export', requirePermission('sales-report', 'invoice-list'), exportLimiter, asyncHandler(async (req, res) => {
-=======
-router.get('/sales/export', requirePermission('sales-report', 'invoice-list'), asyncHandler(async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const shopId = req.shop!.id;
   const where = buildInvoiceListWhere(shopId, req.query as Record<string, any>);
   const sales = await prisma.sale.findMany({
@@ -716,7 +675,6 @@ router.post('/sales/:id/receive', requirePermission('invoice-list', 'billing'), 
           },
         });
 
-<<<<<<< HEAD
         // Recorded as its own dated row as well as bumping the invoice. The
         // invoice's paid* columns are the state of that invoice; this is the
         // event, and it is what lets a day's takings include money collected
@@ -734,8 +692,6 @@ router.post('/sales/:id/receive', requirePermission('invoice-list', 'billing'), 
           },
         });
 
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         if (sale.customerId && received > 0) {
           const newBalance = Math.max(0, (sale.customer?.creditBalance || 0) - received);
           await tx.customer.update({

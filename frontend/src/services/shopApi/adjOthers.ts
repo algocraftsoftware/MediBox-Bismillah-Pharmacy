@@ -1,9 +1,5 @@
 import { AdjOthers, AdjOthersListResponse, RtvAdjustOption } from "../../types";
-<<<<<<< HEAD
 import { API_BASE_URL, ApiError, request } from "./http";
-=======
-import { request } from "./http";
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 export function adjOthersApi(base: string, token: string) {
   return {
@@ -23,7 +19,6 @@ export function adjOthersApi(base: string, token: string) {
     updateAdjOthers: (id: number, data: Record<string, unknown>) =>
       request<AdjOthers>(`${base}/adj-others/${id}`, token, { method: "PUT", body: JSON.stringify(data) }),
     approveAdjOthers: (id: number) => request<AdjOthers>(`${base}/adj-others/${id}/approve`, token, { method: "POST" }),
-<<<<<<< HEAD
     unapproveAdjOthers: (id: number) => request<AdjOthers>(`${base}/adj-others/${id}/unapprove`, token, { method: "POST" }),
     uploadAdjOthersAttachment: async (id: number, file: File) => {
       const body = new FormData();
@@ -39,7 +34,5 @@ export function adjOthersApi(base: string, token: string) {
       }
       return (await res.json()) as AdjOthers;
     },
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   };
 }

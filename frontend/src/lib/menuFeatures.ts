@@ -1,10 +1,6 @@
 // The shop nav's MENU dropdown items — fixed serial order (per the Super
 // Admin's own numbered layout sheet), rendered 4-per-column and
-<<<<<<< HEAD
 // auto-flowing (see MediboxHeader.tsx) so removing a permission just closes
-=======
-// auto-flowing (see AsterHeader.tsx) so removing a permission just closes
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 // the gap and reflows instead of leaving a ragged fixed column short or any
 // blank space. Also doubles as (part of) the master list of permission keys
 // a Super Admin can grant to an Admin/Staff account — every route id here
@@ -32,11 +28,8 @@ export const MENU_FEATURES: { id: string; label: string }[] = [
   // built feature here, and the four below it are still Coming Soon screens.
   { id: "edit-stock", label: "Edit Stock" },
   { id: "create-stock", label: "Create Stock" },
-<<<<<<< HEAD
   { id: "stock-report", label: "Pharmacy Stock Report" },
   { id: "finance-overview", label: "Financial Overview" },
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   { id: "internal-issue", label: "Internal Issue" },
   { id: "internal-receive", label: "Internal Receive" },
   { id: "internal-requisition", label: "Internal Requisition" },
@@ -60,7 +53,6 @@ export const ALL_FEATURE_IDS: string[] = ALL_FEATURES.map((f) => f.id);
 // still fully overridable via the checklist before submitting.
 export const DEFAULT_ADMIN_PERMISSIONS: string[] = ALL_FEATURE_IDS;
 export const DEFAULT_STAFF_PERMISSIONS: string[] = ["billing", "customer-registration", "stock-data"];
-<<<<<<< HEAD
 
 // Menu items that belong to the pharmacy's admin account by virtue of being the
 // admin, rather than being granted feature by feature — the same footing as
@@ -69,5 +61,3 @@ export const DEFAULT_STAFF_PERMISSIONS: string[] = ["billing", "customer-registr
 export const ADMIN_ONLY_MENU_FEATURES: { id: string; label: string }[] = [
   { id: "create-vendor", label: "Create Vendor" },
 ];
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77

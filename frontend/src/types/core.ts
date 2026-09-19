@@ -33,8 +33,5 @@ export interface Supplier {
   name: string;
   contact: string | null;
   address: string | null;
-<<<<<<< HEAD
   paymentMode?: string | null;
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 }

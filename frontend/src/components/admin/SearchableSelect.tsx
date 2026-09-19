@@ -19,12 +19,9 @@ interface SearchableSelectProps {
   // every medicine sharing that ingredient). Otherwise Enter just picks the
   // first matching option.
   allowFreeText?: boolean;
-<<<<<<< HEAD
   // Marks the control as needing a value — draws the same red edge a plain
   // required input gets. Opt-in; every existing caller leaves it off.
   invalid?: boolean;
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 }
 
 const MAX_OPTIONS = 100;
@@ -36,10 +33,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   placeholder = "Select...",
   label,
   allowFreeText = false,
-<<<<<<< HEAD
   invalid = false,
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -98,13 +92,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
             }
             if (e.key === "Escape") setOpen(false);
           }}
-<<<<<<< HEAD
           className={`w-full border rounded px-2 py-1.5 font-semibold pr-7 outline-none focus:border-emerald-500 ${
             invalid ? "border-red-500 bg-red-50" : "border-slate-300"
           }`}
-=======
-          className="w-full border border-slate-300 rounded px-2 py-1.5 font-semibold pr-7 outline-none focus:border-emerald-500"
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         />
         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
       </div>

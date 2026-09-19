@@ -45,7 +45,6 @@ export function uploadLogoBuffer(buffer: Buffer, mimetype: string): Promise<stri
 export function uploadSignatureBuffer(buffer: Buffer, mimetype: string): Promise<string> {
   return uploadImageBuffer(buffer, mimetype, 'medibox/shop-signatures', [{ width: 600, height: 240, crop: 'limit' }]);
 }
-<<<<<<< HEAD
 
 // A GRN's purchase invoice: a photo or a scanned PDF of what the supplier sent.
 // Unlike logos and signatures this is a document, so it is stored as uploaded —
@@ -54,5 +53,3 @@ export function uploadSignatureBuffer(buffer: Buffer, mimetype: string): Promise
 export function uploadAttachmentBuffer(buffer: Buffer, mimetype: string): Promise<string> {
   return uploadImageBuffer(buffer, mimetype, 'medibox/grn-attachments', []);
 }
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77

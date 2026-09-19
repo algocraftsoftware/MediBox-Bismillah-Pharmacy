@@ -20,9 +20,6 @@ export function rtvApi(base: string, token: string) {
     updateRtv: (id: number, data: Record<string, unknown>) =>
       request<Rtv>(`${base}/rtv/${id}`, token, { method: "PUT", body: JSON.stringify(data) }),
     approveRtv: (id: number) => request<Rtv>(`${base}/rtv/${id}/approve`, token, { method: "POST" }),
-<<<<<<< HEAD
     unapproveRtv: (id: number) => request<Rtv>(`${base}/rtv/${id}/unapprove`, token, { method: "POST" }),
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   };
 }

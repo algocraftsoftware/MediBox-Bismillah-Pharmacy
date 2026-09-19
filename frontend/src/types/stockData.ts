@@ -23,7 +23,6 @@ export interface StockDataResponse {
 }
 
 // Edit Stock shows the same grid as Stock Data, plus the row identity it needs
-<<<<<<< HEAD
 // to write an edit back. One row per item, so an edit is made once and applies
 // to the whole product and every batch behind it. `batchCount` is how many
 // batches stand behind the row in the selected warehouse: at 0 there is nothing
@@ -31,14 +30,6 @@ export interface StockDataResponse {
 export interface EditStockRow extends StockDataRow {
   productId: number;
   batchCount: number;
-=======
-// to write an edit back to the right place. `batchId` is null when the item has
-// no batch in the selected warehouse yet — that row's Purchase/Sales Price has
-// nothing to write to (both are Batch columns), so those two cells are locked.
-export interface EditStockRow extends StockDataRow {
-  productId: number;
-  batchId: number | null;
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 }
 
 export interface EditStockResponse {
@@ -52,11 +43,7 @@ export interface EditStockResponse {
 // never rewritten with a value the grid merely displayed.
 export interface EditStockUpdate {
   productId: number;
-<<<<<<< HEAD
   itemName?: string;
-=======
-  batchId: number | null;
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   displayCategory?: string | null;
   purchasePrice?: number;
   salesPrice?: number;

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # MediBox / Medibox Pharmacy — Implemented Features
-=======
-# MediBox / Aster Pharmacy — Implemented Features
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 This file is a reference for AI agents working in this repo. It describes what exists today, where the code lives, and non-obvious business rules — so you don't have to re-read the entire codebase to get oriented. It reflects the state of the repo after "Phase 1" (rate limiting, Prisma schema split, shared frontend helpers), "Phase 2" (Redux migration for `ShopSessionContext`), and "Phase 3" (splitting the large frontend files into modular folders, and splitting `shopRoutes.ts` on the backend — see below). See **Known follow-ups** at the end for what is intentionally *not* done yet.
 
@@ -12,11 +8,8 @@ Stack: Next.js 16 (App Router) + React 19 frontend (`frontend/`); Express 4 + Pr
 
 ## Architecture
 
-<<<<<<< HEAD
 **Table layout convention**: grids are `table-auto` inside an `overflow-auto` box, with `whitespace-nowrap` cells. They used to be `table-fixed` with percentage column widths and `truncate` on every cell, which on a narrower display squeezed columns below the width of their text and then clipped it — the value was unreadable with no way to reveal it. Columns now size to their content and the table scrolls sideways when it outgrows the screen. Two cells keep a width cap and an ellipsis on purpose (Billing's Supplier, the ledger's Description); both carry a `title` tooltip. The 58mm receipt in `InvoiceModal.tsx` is deliberately excluded — its width is fixed to the paper.
 
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 - **Auth**: `backend/src/auth.ts`. Two JWT shapes — `{role:'SUPER_ADMIN', sub}` for platform superadmins, `{role:'SHOP_ADMIN', sub, shopId, shopSlug, adminRole, permissions}` for shop accounts, 12h expiry. `requireShopAdmin` resolves `:slug` → `Shop`, checks `status==='ACTIVE'`, and verifies the token's `shopId` matches the URL's shop (a shop token can never reach another shop). `requirePermission(...featureIds)` gates a route behind the account's `permissions` array (any-one-match, since some endpoints are shared across pages, e.g. customer lookup used by both Billing and Customer Registration).
 - **Route files**: `backend/src/routes/shopRoutes.ts` was 2470 lines and has now been split (Phase 3) into `shopRoutes.ts` (114 lines — SHOP/SESSION + SETTINGS + ORGANIZATION), `stockDataRoutes.ts` (STOCK DATA + EXPIRE PRODUCTS + SOLD PRODUCT LEDGER), `billingRoutes.ts` (PRODUCT/BATCH SEARCH + SALES/BILLING + INVOICE ITEM CANCEL), `customerRoutes.ts` (CUSTOMERS), `dashboardRoutes.ts` (DASHBOARD, exports `aggregateSales`/`aggregateCogs`), `salesReportRoutes.ts` (SALES REPORT + Profit sub-reports), `csvImportRoutes.ts` (CSV IMPORT) — all mounted in `app.ts` at the same `/api/shops/:slug` base path, each starting with `router.use(requireShopAdmin)`, pure code motion verified byte-identical against the original. Plus the pre-existing dedicated files per newer module: `grnRoutes.ts`, `grnWithoutPoRoutes.ts`, `adjWithPoRoutes.ts`, `adjOthersRoutes.ts`, `vstRoutes.ts`, `rtvRoutes.ts`, `purchaseRequisitionRoutes.ts`, `purchaseOrderRoutes.ts`, `employeeRoutes.ts`, `authRoutes.ts`, `superadminRoutes.ts`.
 - **Cross-file helper sharing (backend wart)**: several backend route files export plain functions consumed by sibling route files instead of a shared `lib/`/`services/` layer — e.g. `adminSelect`/`priceItems` from `purchaseRequisitionRoutes.ts`; `computeItem`/`priceGrnItems`/`grnInclude` from `grnRoutes.ts`; `remainingRtvAdjustableBalance` from `rtvRoutes.ts`. This works but is organic, not a designed module boundary — still open, see Known follow-ups.
@@ -27,29 +20,17 @@ Stack: Next.js 16 (App Router) + React 19 frontend (`frontend/`); Express 4 + Pr
 - **Rate limiting / perf middleware**: `backend/src/middleware/rateLimit.ts` — `apiLimiter` (300 req/15min, mounted on `/api`) and `authLimiter` (20 req/15min, mounted on `/api/auth` in front of `authRoutes`). `compression()` mounted globally in `app.ts` right after `cors()`.
 - **Database indexes**: `Product` has `@@index`es on `shopId+name`/`genericName`/`dosageForm`/`departmentId`/`defaultSupplierId` plus GIN trigram indexes (`gin_trgm_ops`) on `name`/`genericName`/`externalCode` for fast `contains` search; `Sale` has `@@index`es on `shopId+createdAt`/`storeId+createdAt`/`shopId+cashierId` plus a trigram index on `invoiceNo`; `Customer` has `@@index`es on `shopId+mobile`/`orgName`/`custType`/`employeeId` plus trigram indexes on `mobile`/`customerCode`. Applied via migration `20260813174900_add_missing_indexes`.
 - **Frontend 404**: `[shopSlug]/(app)/[module]/page.tsx` (the generic "Coming Soon" placeholder route) calls `notFound()` for any `module` param not in `ALL_FEATURE_IDS`, instead of rendering the placeholder for arbitrary strings; the 4 real placeholder features (`internal-issue`, `internal-receive`, `internal-requisition`, `req-central-warehouse`) still render "Coming Soon" exactly as before.
-<<<<<<< HEAD
 - **Shared frontend helpers**: `frontend/src/lib/format.ts` (`fmt`/`fmt4` number formatters), `frontend/src/components/admin/ComboSelect.tsx` (button+dropdown-panel combobox — `ComboOption`/`ComboSelect`, used by 7+ of the newer view files; now has arrow-key up/down navigation + Enter-to-select in its open dropdown panel, added this session — benefits every consumer automatically), `frontend/src/components/admin/SearchableSelect.tsx` (a **different**, older text-input-based combobox used by Stock Data / Expire Products — do not confuse the two, see Known follow-ups), `frontend/src/lib/numberToWords.ts` (`amountInWords()` for print reports), `frontend/src/components/admin/ItemEntryTypeahead.tsx` (debounced item-search row, used by GRN Without PO / VST — has its own independent arrow-key nav/Enter-select), `frontend/src/components/admin/PaginationBar.tsx` (the shared First/Previous/Page-X-of-Y/Next/Last footer, used by every paginated list screen — extracted in Phase 3 after confirming byte-identical behavior across all 12 consumers), `frontend/src/components/admin/ErrorBanner.tsx` (fixed top-center red banner for loud blocking messages — promoted out of `MediboxBillingView/` this session so it could be reused), `frontend/src/components/admin/MobileNumberInput.tsx` (`MobileNumberInput`/`validateMobileNumber` — digits-only input capped at 11 chars, typing past the limit pops the shared `ErrorBanner`; used by Billing's mobile lookup, Customer Registration's `AddCustomerModal`, and Employees), `frontend/src/lib/proportionalSplit.ts` (`splitProportionally(total, weights)` — spreads an invoice-level Discount/VAT amount across line items by weight, last non-zero-weight item absorbs the rounding remainder; used by GRN With/Without PO and Adjust With PO's CALCULATE buttons).
 - **Frontend file layout (Phase 3)**: `frontend/src/types/` and `frontend/src/services/` are split into per-domain files with barrel re-exports (`types/index.ts` does `export * from "./core"` etc.; `services/api.ts`'s `shopApi()` factory composes `services/shopApi/<domain>.ts` method groups via object spread) — no call-site changes anywhere, since every consumer already went through the barrel/factory. Each of the 10 large `Medibox*View.tsx` components (`MediboxBillingView`, `MediboxCustomerRegistrationView`, `MediboxAdjWithOthersView`, `MediboxInvoiceListView`, `MediboxVstView`, `MediboxRtvView`, `MediboxPurchaseOrderView`, `MediboxGrnWithPoView`, `MediboxAdjWithPoView`, `MediboxGrnWithoutPoView`, `MediboxPurchaseRequisitionView`) is now a folder (e.g. `components/admin/MediboxGrnWithPoView/`) with `index.tsx` (the thin router/state component), one file per sub-view (`ListView.tsx`, `DetailView.tsx`, and `NewView.tsx`/`FormView.tsx` where applicable), and a `types.ts` for file-local draft interfaces/constants/helpers — a pattern that already existed inside each file (router + named sub-components) and was made mechanical (pure code motion, no logic changes) into separate files. `MediboxBillingView` was the one exception without pre-existing List/Detail sub-components, so it instead got `constants.ts`/`helpers.ts`/`TypeaheadInput.tsx`/`ErrorBanner.tsx` pulled out of the main file, leaving the core state/JSX in `index.tsx` (still large — deliberately not split further into hooks, since that would risk behavior drift). `app/superadmin/page.tsx` similarly had its modal sub-components (`CreateShopModal`, `EditShopModal`, `ShopSalesModal`, `PermissionChecklist`, `SlugInput`) moved to `components/superadmin/`.
 - **Print/report pattern**: no PDF library. Every module's "print" feature uses `window.open("", "_blank")` + `document.write(...)` + `window.print()`.
 - **Counters**: sequential per-shop transaction numbers use dedicated `{shopId Int @id; value Int @default(0)}` counter models (`GrnCounter`, `GrnwCounter`, `GrnaCounter`, `VstCounter`, `RtvCounter`, `AdjOthersCounter`, `CustomerCounter`, `InvoiceCounter`, `RequisitionCounter`, `OrderCounter`), incremented via `tx.<counter>.upsert` inside the creating `$transaction` so numbers never collide under concurrency.
 - **Menu / permissions (`frontend/src/lib/menuFeatures.ts`)**: single source of truth for both the MENU dropdown (`MediboxHeader.tsx`) and the superadmin's grantable-permissions checklist (`PermissionChecklist.tsx`). Flat, not column-based: `MENU_FEATURES` (rendered in the dropdown as an auto-flowing `grid-cols-5`, 5-per-row — granting/revoking a permission just closes the gap and reflows instead of leaving a fixed column short/ragged) excludes `employees`/`employee-salary`/`expenses`, which instead live in `DASHBOARD_FEATURES` and render as buttons on the Pharmacy Dashboard (see Dashboard above) rather than in the dropdown. `ALL_FEATURES`/`ALL_FEATURE_IDS` = the union of both, used by `PermissionChecklist.tsx` (so Dashboard-hosted features are still grantable) and by the route-gating check in `[shopSlug]/(app)/layout.tsx` (`isGatedRoute = ALL_FEATURE_IDS.includes(activeRoute)`, generic — works for any feature id without per-route code). MENU dropdown footer text is `{shopName} - Powered by: AtovixSoft`.
-=======
-- **Shared frontend helpers**: `frontend/src/lib/format.ts` (`fmt`/`fmt4` number formatters), `frontend/src/components/admin/ComboSelect.tsx` (button+dropdown-panel combobox — `ComboOption`/`ComboSelect`, used by 7+ of the newer view files; now has arrow-key up/down navigation + Enter-to-select in its open dropdown panel, added this session — benefits every consumer automatically), `frontend/src/components/admin/SearchableSelect.tsx` (a **different**, older text-input-based combobox used by Stock Data / Expire Products — do not confuse the two, see Known follow-ups), `frontend/src/lib/numberToWords.ts` (`amountInWords()` for print reports), `frontend/src/components/admin/ItemEntryTypeahead.tsx` (debounced item-search row, used by GRN Without PO / VST — has its own independent arrow-key nav/Enter-select), `frontend/src/components/admin/PaginationBar.tsx` (the shared First/Previous/Page-X-of-Y/Next/Last footer, used by every paginated list screen — extracted in Phase 3 after confirming byte-identical behavior across all 12 consumers), `frontend/src/components/admin/ErrorBanner.tsx` (fixed top-center red banner for loud blocking messages — promoted out of `AsterBillingView/` this session so it could be reused), `frontend/src/components/admin/MobileNumberInput.tsx` (`MobileNumberInput`/`validateMobileNumber` — digits-only input capped at 11 chars, typing past the limit pops the shared `ErrorBanner`; used by Billing's mobile lookup, Customer Registration's `AddCustomerModal`, and Employees), `frontend/src/lib/proportionalSplit.ts` (`splitProportionally(total, weights)` — spreads an invoice-level Discount/VAT amount across line items by weight, last non-zero-weight item absorbs the rounding remainder; used by GRN With/Without PO and Adjust With PO's CALCULATE buttons).
-- **Frontend file layout (Phase 3)**: `frontend/src/types/` and `frontend/src/services/` are split into per-domain files with barrel re-exports (`types/index.ts` does `export * from "./core"` etc.; `services/api.ts`'s `shopApi()` factory composes `services/shopApi/<domain>.ts` method groups via object spread) — no call-site changes anywhere, since every consumer already went through the barrel/factory. Each of the 10 large `Aster*View.tsx` components (`AsterBillingView`, `AsterCustomerRegistrationView`, `AsterAdjWithOthersView`, `AsterInvoiceListView`, `AsterVstView`, `AsterRtvView`, `AsterPurchaseOrderView`, `AsterGrnWithPoView`, `AsterAdjWithPoView`, `AsterGrnWithoutPoView`, `AsterPurchaseRequisitionView`) is now a folder (e.g. `components/admin/AsterGrnWithPoView/`) with `index.tsx` (the thin router/state component), one file per sub-view (`ListView.tsx`, `DetailView.tsx`, and `NewView.tsx`/`FormView.tsx` where applicable), and a `types.ts` for file-local draft interfaces/constants/helpers — a pattern that already existed inside each file (router + named sub-components) and was made mechanical (pure code motion, no logic changes) into separate files. `AsterBillingView` was the one exception without pre-existing List/Detail sub-components, so it instead got `constants.ts`/`helpers.ts`/`TypeaheadInput.tsx`/`ErrorBanner.tsx` pulled out of the main file, leaving the core state/JSX in `index.tsx` (still large — deliberately not split further into hooks, since that would risk behavior drift). `app/superadmin/page.tsx` similarly had its modal sub-components (`CreateShopModal`, `EditShopModal`, `ShopSalesModal`, `PermissionChecklist`, `SlugInput`) moved to `components/superadmin/`.
-- **Print/report pattern**: no PDF library. Every module's "print" feature uses `window.open("", "_blank")` + `document.write(...)` + `window.print()`.
-- **Counters**: sequential per-shop transaction numbers use dedicated `{shopId Int @id; value Int @default(0)}` counter models (`GrnCounter`, `GrnwCounter`, `GrnaCounter`, `VstCounter`, `RtvCounter`, `AdjOthersCounter`, `CustomerCounter`, `InvoiceCounter`, `RequisitionCounter`, `OrderCounter`), incremented via `tx.<counter>.upsert` inside the creating `$transaction` so numbers never collide under concurrency.
-- **Menu / permissions (`frontend/src/lib/menuFeatures.ts`)**: single source of truth for both the MENU dropdown (`AsterHeader.tsx`) and the superadmin's grantable-permissions checklist (`PermissionChecklist.tsx`). Flat, not column-based: `MENU_FEATURES` (rendered in the dropdown as an auto-flowing `grid-cols-5`, 5-per-row — granting/revoking a permission just closes the gap and reflows instead of leaving a fixed column short/ragged) excludes `employees`/`employee-salary`/`expenses`, which instead live in `DASHBOARD_FEATURES` and render as buttons on the Pharmacy Dashboard (see Dashboard above) rather than in the dropdown. `ALL_FEATURES`/`ALL_FEATURE_IDS` = the union of both, used by `PermissionChecklist.tsx` (so Dashboard-hosted features are still grantable) and by the route-gating check in `[shopSlug]/(app)/layout.tsx` (`isGatedRoute = ALL_FEATURE_IDS.includes(activeRoute)`, generic — works for any feature id without per-route code). MENU dropdown footer text is `{shopName} - Powered by: AtovixSoft`.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 ---
 
 ## Billing
 
-<<<<<<< HEAD
 The POS screen. **Backend**: `billingRoutes.ts` SALES/BILLING section. **Frontend**: `MediboxBillingView.tsx`.
-=======
-The POS screen. **Backend**: `billingRoutes.ts` SALES/BILLING section. **Frontend**: `AsterBillingView.tsx`.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 - `GET /products/search?q=&storeId=` — batch-level typeahead by name/generic/barcode; only in-stock (`stockQty>0`), non-expired batches; prefix matches ranked first, capped 20.
 - `GET /products/by-barcode/:barcode?storeId=` — exact batch lookup.
@@ -71,11 +52,7 @@ Models: `Sale`, `SaleItem`, `Batch`, `Customer`, `CustomerCounter`, `InvoiceCoun
 
 ## Customer Registration
 
-<<<<<<< HEAD
 **Frontend**: `MediboxCustomerRegistrationView.tsx` (also exports `AddCustomerModal`, reused by Billing). **Backend**: `customerRoutes.ts` CUSTOMERS section.
-=======
-**Frontend**: `AsterCustomerRegistrationView.tsx` (also exports `AddCustomerModal`, reused by Billing). **Backend**: `customerRoutes.ts` CUSTOMERS section.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 - `GET /customers` (permission `customer-registration` or `billing`) — filters: `storeId`, `custType`, `gender`, `customerCode`, plus a free-text box OR'd across `mobile`/`employeeId`/`name`/`customerCode`.
 - `POST/PUT /customers` — **credit limit is server-zeroed for any `custType` other than `VVIP`**, regardless of what the client sends. Duplicate mobile → 409.
@@ -88,11 +65,7 @@ Models: `Customer`, `CustomerCounter`, `Store`.
 
 ## Stock Data
 
-<<<<<<< HEAD
 Read-only paginated `Product` × `Batch` grid. **Frontend**: `MediboxStockDataView.tsx`. **Backend**: `stockDataRoutes.ts` STOCK DATA section, raw SQL via `buildStockDataQuery`.
-=======
-Read-only paginated `Product` × `Batch` grid. **Frontend**: `AsterStockDataView.tsx`. **Backend**: `stockDataRoutes.ts` STOCK DATA section, raw SQL via `buildStockDataQuery`.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 - `GET /stock-data` — requires `storeId`; filters `type` (`AVAILABLE`/`ZERO` via `stockQty`), `dosageForm`, `generic` (partial), `departmentId`, `supplierId`, `search`.
 - `GET /stock-data/export` — same filters → XLSX.
@@ -108,11 +81,7 @@ Models: `Product`, `Department`, `Supplier`, `Batch`.
 
 ## Edit Stock
 
-<<<<<<< HEAD
 The Stock Data grid again — identical filter panel, columns, pagination and XLSX export — but with four columns writable straight in the grid: **Display Category**, **Purchase Price**, **Sales Price**, **Box Qty**. Applies to the whole cloned catalog (~17k items). **Frontend**: `MediboxEditStockView.tsx`. **Backend**: `stockDataRoutes.ts` EDIT STOCK section, sharing `buildStockDataQuery` plus the `stockGridColumnsSql` / `stockGridExportColumnsSql` column lists with Stock Data so the two grids can't drift apart.
-=======
-The Stock Data grid again — identical filter panel, columns, pagination and XLSX export — but with four columns writable straight in the grid: **Display Category**, **Purchase Price**, **Sales Price**, **Box Qty**. Applies to the whole cloned catalog (~17k items). **Frontend**: `AsterEditStockView.tsx`. **Backend**: `stockDataRoutes.ts` EDIT STOCK section, sharing `buildStockDataQuery` plus the `stockGridColumnsSql` / `stockGridExportColumnsSql` column lists with Stock Data so the two grids can't drift apart.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 - `GET /edit-stock` — same params as `/stock-data`, plus `productId`/`batchId` per row so a save can target the exact row shown. Ordered `p.name, p.id, b.id` (Stock Data sorts on name alone) so rows being edited can't shuffle between the read and the save.
 - `PATCH /edit-stock` — `{ storeId, updates: [{ productId, batchId, displayCategory?, purchasePrice?, salesPrice?, boxQty? }] }`. One request carries every edited row on the page and runs in a single transaction, so a page of edits lands completely or not at all. Only fields the user actually changed are sent.
@@ -131,11 +100,7 @@ Models: `Product`, `Batch`.
 
 ## Create Stock
 
-<<<<<<< HEAD
 Hand-enters a new catalog item using the Stock Data columns that are actually data entry. **Frontend**: `MediboxCreateStockView.tsx`. **Backend**: `stockDataRoutes.ts` CREATE STOCK section.
-=======
-Hand-enters a new catalog item using the Stock Data columns that are actually data entry. **Frontend**: `AsterCreateStockView.tsx`. **Backend**: `stockDataRoutes.ts` CREATE STOCK section.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 - `GET /create-stock/next-item-no` — preview of the code the next item will get.
 - `POST /create-stock` — creates the `Product` plus one opening `Batch`, in a transaction.
@@ -155,7 +120,6 @@ Models: `Product`, `Batch`, `Department`, `SubDepartment`, `Supplier`, `Store`.
 
 ---
 
-<<<<<<< HEAD
 ## Pharmacy Stock Report
 
 Valuation of stock on hand right now, in two shapes chosen from the **Report Name** picker. **Frontend**: `MediboxStockReportView.tsx`. **Backend**: `stockReportRoutes.ts`. Permission: `stock-report`.
@@ -196,11 +160,6 @@ Models: `Sale`, `SaleItem`, `Batch`, `Grn`, `Expense`, `EmployeeSalary`, `Produc
 ## Expire Products
 
 Lists batches nearing/past expiry with filtering and export (built this session). Follows the same raw-SQL / filter-panel pattern as Stock Data — see `MediboxExpireProductsView.tsx` and the corresponding `stockDataRoutes.ts` section for exact filter params.
-=======
-## Expire Products
-
-Lists batches nearing/past expiry with filtering and export (built this session). Follows the same raw-SQL / filter-panel pattern as Stock Data — see `AsterExpireProductsView.tsx` and the corresponding `stockDataRoutes.ts` section for exact filter params.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 ---
 
@@ -212,11 +171,7 @@ Per-product sale history ledger (built this session) — see `stockDataRoutes.ts
 
 ## Invoice List
 
-<<<<<<< HEAD
 **Frontend**: `MediboxInvoiceListView.tsx`. **Backend**: `billingRoutes.ts`, shares `buildInvoiceListWhere` with Sales Report.
-=======
-**Frontend**: `AsterInvoiceListView.tsx`. **Backend**: `billingRoutes.ts`, shares `buildInvoiceListWhere` with Sales Report.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 - `GET /sales` (permission `sales-report` or `invoice-list`) — paginated via `buildInvoiceListWhere`: `storeId`, `cashierId` (as `userId`), `invoiceNo` (contains), `createdAt` range (`to` extended to end-of-day), nested `customer.is{orgName, customerCode, mobile, employeeId}`.
 - `GET /sales/organizations` — distinct `customer.orgName` values, feeds the separate **Organization** filter.
@@ -228,21 +183,13 @@ The UI's "Report" dropdown (Initial/Modified) is local state only — not wired 
 
 **Cust.Type filter** (fixed this session): the filter used to be wired to `orgName` under a misleading "Cust.Type" label, so it always looked empty for the vast majority of walk-in/general customers. There are now two separate filters — **Cust.Type** (real `Customer.custType` enum: GENERAL/EMPLOYEE/OTHER/VVIP, `custType` query param) and **Organization** (the original org-name filter, unchanged). Both flow through `buildInvoiceListWhere` (shared with Sales Report and Dashboard's Due Collection tab).
 
-<<<<<<< HEAD
 **Due Collection** (fixed this session): `buildInvoiceListWhere` accepts a `dueOnly` param (`where.dueAmount = {gt: 0.01}`) — used by the Dashboard's Due Collection tab, which renders `MediboxInvoiceListView` itself with `dueOnly` (and no default date-range restriction, since overdue invoices can be from any date) rather than a separate component.
-=======
-**Due Collection** (fixed this session): `buildInvoiceListWhere` accepts a `dueOnly` param (`where.dueAmount = {gt: 0.01}`) — used by the Dashboard's Due Collection tab, which renders `AsterInvoiceListView` itself with `dueOnly` (and no default date-range restriction, since overdue invoices can be from any date) rather than a separate component.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 ---
 
 ## Invoice Item Cancel
 
-<<<<<<< HEAD
 Cancels individual line items on an already-billed invoice. Populates `SaleItemCancellation`, restocks the batch (`Batch.stockQty` incremented by the canceled qty), and reduces `Sale.paidAmount`/increments `Sale.refundAmount` (capped at what remains paid). See `MediboxInvoiceItemCancelView.tsx` and its `billingRoutes.ts` section (`POST /sales/:id/cancel-items`) for exact validation rules (e.g. cannot over-cancel beyond originally sold qty). Lookup (`GET /sales/by-invoice-no`) trims stray whitespace so a pasted invoice number still matches.
-=======
-Cancels individual line items on an already-billed invoice. Populates `SaleItemCancellation`, restocks the batch (`Batch.stockQty` incremented by the canceled qty), and reduces `Sale.paidAmount`/increments `Sale.refundAmount` (capped at what remains paid). See `AsterInvoiceItemCancelView.tsx` and its `billingRoutes.ts` section (`POST /sales/:id/cancel-items`) for exact validation rules (e.g. cannot over-cancel beyond originally sold qty). Lookup (`GET /sales/by-invoice-no`) trims stray whitespace so a pasted invoice number still matches.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 **Gap** (unchanged): `SaleItemCancellation` data is read by the Pharmacy Sales Report (Profit) reports (which subtract canceled qty proportionally — see below) and by User-Wise Collection Summary's Refund column, but `PHARMACY_CANCEL_SUMMARY`/`PHARMACY_CANCEL_DETAILS` specifically are still stubbed — see Known follow-ups.
 
@@ -250,11 +197,7 @@ Cancels individual line items on an already-billed invoice. Populates `SaleItemC
 
 ## Sales Report
 
-<<<<<<< HEAD
 **Frontend**: `MediboxSalesReportView.tsx`. **Backend**: `salesReportRoutes.ts` SALES REPORT section, `GET /reports/sales` + `/reports/sales/export`.
-=======
-**Frontend**: `AsterSalesReportView.tsx`. **Backend**: `salesReportRoutes.ts` SALES REPORT section, `GET /reports/sales` + `/reports/sales/export`.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 All reports share one flat row shape (`LedgerRow`: leaf invoice rows, group-header rows, per-group "Total:" rows, a final "Grand Total" row) built from `fetchSaleLedgerBase` (raw SQL joining `Sale`→`Store`→`ShopAdmin`→`Customer`, with a lateral subquery for COGS from `SaleItem`/`Batch`).
 
@@ -291,7 +234,6 @@ Frontend: `PROFIT_REPORT_NAMES` renders as an `<optgroup label="Pharmacy Sales R
 
 ## Dashboard
 
-<<<<<<< HEAD
 **Dashboard sidebar** (`DashboardTabBar.tsx`): Collection, Due Collection, Employees, Employee Salary, Expenses and Settings render as a left sidebar rather than a top row — as a row they wrapped onto two lines on a narrower display and pushed the page content down. The five pages that share it (Dashboard, Employees, Employee Salary, Expenses, Settings) lay out as a flex row, with the content pane carrying `flex-1 min-w-0` so a wide table scrolls inside it instead of shoving the sidebar off-screen. Which items appear is unchanged: granted features decide them for every role, and Settings stays Admin-only.
 
 **Live KPI strip**: Sales for the selected range, Today, This Month, This Year, Purchase and Payment Out. Every one of these already came back from `/dashboard` on each refresh but had nowhere to show — `daily`, `monthly`, `yearly`, `sales`, `purchase` and `payment` were all fetched and discarded. They share the same `collectionData` as the cards below, so a date change or auto-refresh moves the whole page together.
@@ -299,9 +241,6 @@ Frontend: `PROFIT_REPORT_NAMES` renders as an `<optgroup label="Pharmacy Sales R
 **Item Category Split donut**: share of sales taken by Pharma vs Non-Pharma over the same period as the headline figures, from `aggregateCategorySplit` in `dashboardRoutes.ts` (returned on `/dashboard` as `categorySplit`). Groups on the product's live department rather than `SaleItem.departmentSnapshot`, so a department renamed later still groups correctly, and nets off cancelled quantities the same way `aggregateCogs` does. Driven by the same `collectionData` as the Payment Method Split beside it, so both refresh together.
 
 **Frontend**: `MediboxPharmacyDashboardView.tsx`. **Backend**: `dashboardRoutes.ts` DASHBOARD section, `GET /dashboard`, via `aggregateSales(shopId, storeId?, from, to)`.
-=======
-**Frontend**: `AsterPharmacyDashboardView.tsx`. **Backend**: `dashboardRoutes.ts` DASHBOARD section, `GET /dashboard`, via `aggregateSales(shopId, storeId?, from, to)`.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 - `sales.total` = `Sum(Sale.netAmount)` in range.
 - `collection.total` = `Sum(Sale.paidAmount where paidAmount>0)` **plus `adjustment`**.
@@ -309,11 +248,7 @@ Frontend: `PROFIT_REPORT_NAMES` renders as an `<optgroup label="Pharmacy Sales R
 - Route also computes `purchase`, `payment` (non-credit purchases), and `daily`/`monthly`/`yearly` aggregates — all returned by the API but **currently unused in the UI**, which only renders the Collection card (cash/mobile/card/adjustment breakdown + invoice count).
 - Auto-refresh: `medibox:sale-created` custom event, tab `visibilitychange`/`focus`, and a 20s poll interval.
 
-<<<<<<< HEAD
 **Due Collection tab**: a `Collection` / `Due Collection` toggle at the top of the page. `Due Collection` renders `MediboxInvoiceListView` itself with `dueOnly` (see Invoice List above) instead of a separate component — same filters/pagination/RECEIVE-payment action as Invoice List, just pre-scoped to outstanding dues and with no default date restriction. `MediboxInvoiceListView` takes an optional `heightClassName` prop (defaults to its normal full-viewport height) so it can be embedded below the tab bar without a layout conflict.
-=======
-**Due Collection tab**: a `Collection` / `Due Collection` toggle at the top of the page. `Due Collection` renders `AsterInvoiceListView` itself with `dueOnly` (see Invoice List above) instead of a separate component — same filters/pagination/RECEIVE-payment action as Invoice List, just pre-scoped to outstanding dues and with no default date restriction. `AsterInvoiceListView` takes an optional `heightClassName` prop (defaults to its normal full-viewport height) so it can be embedded below the tab bar without a layout conflict.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 **Dashboard-hosted feature buttons**: Employees, Employee Salary, and Expenses are no longer in the MENU dropdown (see Architecture/Menu below) — instead they render as a row of buttons on the Collection tab, below the Store/date-filter bar, filtered to `DASHBOARD_FEATURES.filter(f => permissions.includes(f.id))` (same permission-gating as the MENU dropdown, just a different render location) and navigating via `router.push`. The Employees/Employee Salary pages themselves are unchanged — only their entry point moved.
 
@@ -323,11 +258,7 @@ Models: `Sale`, `Grn`, `AdjOthers`.
 
 ## Purchase Requisition & Purchase Order
 
-<<<<<<< HEAD
 **Backend**: `purchaseRequisitionRoutes.ts`, `purchaseOrderRoutes.ts`. **Frontend**: `MediboxPurchaseRequisitionView.tsx`, `MediboxPurchaseOrderView.tsx`.
-=======
-**Backend**: `purchaseRequisitionRoutes.ts`, `purchaseOrderRoutes.ts`. **Frontend**: `AsterPurchaseRequisitionView.tsx`, `AsterPurchaseOrderView.tsx`.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 **Key mechanism**: Purchase Order is *not* a separate table — `purchaseOrderRoutes.ts` operates on the same `PurchaseRequisition` model, scoped to `status IN ('APPROVED','FINAL_APPROVED')`.
 
@@ -358,11 +289,7 @@ Models: `PurchaseRequisition`, `PurchaseRequisitionItem`, `RequisitionCounter`, 
 
 ## GRN With PO
 
-<<<<<<< HEAD
 Goods Receipt against an approved Purchase Order. **Backend**: `grnRoutes.ts` (exports `computeItem`/`priceGrnItems`/`grnInclude`, reused by GRN Without PO and Adjust With PO). **Frontend**: `MediboxGrnWithPoView.tsx`.
-=======
-Goods Receipt against an approved Purchase Order. **Backend**: `grnRoutes.ts` (exports `computeItem`/`priceGrnItems`/`grnInclude`, reused by GRN Without PO and Adjust With PO). **Frontend**: `AsterGrnWithPoView.tsx`.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 Counter: `GrnCounter`. `Grn.kind = STANDARD`, `purchaseOrderId` set. See route file for exact variance/pricing rules against the source PO.
 
@@ -380,11 +307,7 @@ Counter: `GrnCounter`. `Grn.kind = STANDARD`, `purchaseOrderId` set. See route f
 
 ## GRN Without PO
 
-<<<<<<< HEAD
 Direct goods receipt with no prior requisition/PO (built this session). **Backend**: `grnWithoutPoRoutes.ts`. **Frontend**: `MediboxGrnWithoutPoView.tsx`. Counter: `GrnwCounter`.
-=======
-Direct goods receipt with no prior requisition/PO (built this session). **Backend**: `grnWithoutPoRoutes.ts`. **Frontend**: `AsterGrnWithoutPoView.tsx`. Counter: `GrnwCounter`.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 Non-obvious: a `bonusAffectsPricing` opt-in flag controls whether bonus (free) quantity is excluded from average-cost pricing math — off by default, matching how bonus stock is normally treated as free rather than cost-diluting.
 
@@ -396,11 +319,7 @@ Item entry uses the shared `ItemEntryTypeahead.tsx` component — its search dro
 
 ## Adjust With PO
 
-<<<<<<< HEAD
 Adjusts a GRN's payable amount using RTV credit balance from the same supplier, tied to a PO (built this session). **Backend**: `adjWithPoRoutes.ts`. **Frontend**: `MediboxAdjWithPoView.tsx`. Counter: `GrnaCounter`. `Grn.kind = ADJUST_WITH_PO`.
-=======
-Adjusts a GRN's payable amount using RTV credit balance from the same supplier, tied to a PO (built this session). **Backend**: `adjWithPoRoutes.ts`. **Frontend**: `AsterAdjWithPoView.tsx`. Counter: `GrnaCounter`. `Grn.kind = ADJUST_WITH_PO`.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 Non-obvious:
 - `Grn.netAmount` is **repurposed** as "Net Payable" specifically for `ADJUST_WITH_PO` rows (differs in meaning from a `STANDARD` GRN's `netAmount`).
@@ -413,11 +332,7 @@ Non-obvious:
 
 ## Adjustment With Others
 
-<<<<<<< HEAD
 Adjusts non-PO-tied amounts (e.g. other payables) using RTV credit balance (built this session). **Backend**: `adjOthersRoutes.ts`. **Frontend**: `MediboxAdjWithOthersView.tsx`. Counter: `AdjOthersCounter`. `AdjOthersType`/`AdjStatus` enums.
-=======
-Adjusts non-PO-tied amounts (e.g. other payables) using RTV credit balance (built this session). **Backend**: `adjOthersRoutes.ts`. **Frontend**: `AsterAdjWithOthersView.tsx`. Counter: `AdjOthersCounter`. `AdjOthersType`/`AdjStatus` enums.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 Shares `remainingRtvAdjustableBalance()` with Adjust With PO (see above) via the `AdjOthersItem` join table — same shared credit pool.
 
@@ -425,21 +340,13 @@ Shares `remainingRtvAdjustableBalance()` with Adjust With PO (see above) via the
 
 ## Virtual Stock Transfer (VST)
 
-<<<<<<< HEAD
 Transfers stock between stores within the same shop without a physical GRN (built this session). **Backend**: `vstRoutes.ts`. **Frontend**: `MediboxVstView.tsx`. Counter: `VstCounter`, `VstStatus` enum. Item entry uses the shared `ItemEntryTypeahead.tsx` component.
-=======
-Transfers stock between stores within the same shop without a physical GRN (built this session). **Backend**: `vstRoutes.ts`. **Frontend**: `AsterVstView.tsx`. Counter: `VstCounter`, `VstStatus` enum. Item entry uses the shared `ItemEntryTypeahead.tsx` component.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 ---
 
 ## Return To Vendor (RTV)
 
-<<<<<<< HEAD
 Returns stock to a supplier, generating RTV credit balance consumable by Adjust With PO / Adjustment With Others (built this session). **Backend**: `rtvRoutes.ts` (exports `remainingRtvAdjustableBalance`). **Frontend**: `MediboxRtvView.tsx`. Counter: `RtvCounter`. `RtvVia` (Warehouse/Head Office), `RtvStatus` enums.
-=======
-Returns stock to a supplier, generating RTV credit balance consumable by Adjust With PO / Adjustment With Others (built this session). **Backend**: `rtvRoutes.ts` (exports `remainingRtvAdjustableBalance`). **Frontend**: `AsterRtvView.tsx`. Counter: `RtvCounter`. `RtvVia` (Warehouse/Head Office), `RtvStatus` enums.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 **VST picker fix**: `GET /vst-options` used to list every `APPROVED` VST for the store/supplier regardless of how much of it had already been returned — a VST whose entire quantity had already been returned via a prior RTV would still show up with nothing left to select. It now fetches each VST's items alongside a `RtvItem.groupBy` sum of already-returned qty per `vstItemId` (same computation `GET /vst/:vstId/items` already did per-item) and drops any VST where every item's `vstQtyPieces - alreadyReturned <= 0`. A VST with only some quantity returned (e.g. 10 of 20 pcs) still appears, for the remaining balance.
 
@@ -447,11 +354,7 @@ Returns stock to a supplier, generating RTV credit balance consumable by Adjust 
 
 ## Employees & Employee Salary
 
-<<<<<<< HEAD
 **Backend**: `employeeRoutes.ts` (gated by `requirePermission('employees','employee-salary')`). **Frontend**: `MediboxEmployeesView.tsx`, `MediboxEmployeeSalaryView.tsx`.
-=======
-**Backend**: `employeeRoutes.ts` (gated by `requirePermission('employees','employee-salary')`). **Frontend**: `AsterEmployeesView.tsx`, `AsterEmployeeSalaryView.tsx`.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 - Employees: standard CRUD on `Employee` (name, address, mobile, age, education, `salary` = default monthly gross).
 - Salary routes are registered **before** `/:id` routes in the file — a documented Express route-order fix (otherwise `/:id` would swallow `/salaries` as `id="salaries"`).
@@ -464,11 +367,7 @@ Returns stock to a supplier, generating RTV credit balance consumable by Adjust 
 
 ## Expenses
 
-<<<<<<< HEAD
 Simple daily expense ledger (new). **Backend**: `expenseRoutes.ts` (gated by `requirePermission('expenses')`, mounted at `/api/shops/:slug/expenses`). **Frontend**: `MediboxExpensesView.tsx`, route `[shopSlug]/expenses`. Model: `Expense` (`shopId`, `name`, `amount`, `createdById` → `ShopAdmin`, `createdAt`).
-=======
-Simple daily expense ledger (new). **Backend**: `expenseRoutes.ts` (gated by `requirePermission('expenses')`, mounted at `/api/shops/:slug/expenses`). **Frontend**: `AsterExpensesView.tsx`, route `[shopSlug]/expenses`. Model: `Expense` (`shopId`, `name`, `amount`, `createdById` → `ShopAdmin`, `createdAt`).
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 - `GET /` — optional `from`/`to` date-range query params (inclusive, `to` extended to end-of-day); returns `{rows, total}` where `total` is a DB-side `Sum(amount)` aggregate over the same filtered set, not a client-side sum of `rows`.
 - `POST /` — `{name, amount}`; `amount` must be a positive number, `name` non-blank (trimmed).
@@ -510,11 +409,7 @@ Simple daily expense ledger (new). **Backend**: `expenseRoutes.ts` (gated by `re
 
 **Phase 2 — Redux migration** (done): `ShopSessionContext` (token, shop info, stores, permissions) now runs on Redux Toolkit under the hood, same exports/shape, zero consumer changes (see State management above). Per-view local state (filters, form drafts) intentionally stayed as local `useState`, not moved to Redux.
 
-<<<<<<< HEAD
 **Phase 3 — Frontend + backend file splitting (done)**: the 10 large `Medibox*View.tsx` components, `app/superadmin/page.tsx`, `types/index.ts`, and `services/api.ts` have all been split into folders/domain files (see Architecture above) — pure code motion, no logic or UI changes, verified by a clean `tsc`/`next build` and an unchanged route list. `backend/src/routes/shopRoutes.ts` (was 2470 lines) has now also been split into `stockDataRoutes.ts`/`billingRoutes.ts`/`customerRoutes.ts`/`dashboardRoutes.ts`/`salesReportRoutes.ts`/`csvImportRoutes.ts` + a slimmed-down `shopRoutes.ts` (see Route files above), verified byte-identical against the original and clean `tsc`/`npm run build`. **Still not done**: the organic route-file cross-export helper sharing (see Architecture) has not been moved into a proper `lib/`/`services/` layer on the backend.
-=======
-**Phase 3 — Frontend + backend file splitting (done)**: the 10 large `Aster*View.tsx` components, `app/superadmin/page.tsx`, `types/index.ts`, and `services/api.ts` have all been split into folders/domain files (see Architecture above) — pure code motion, no logic or UI changes, verified by a clean `tsc`/`next build` and an unchanged route list. `backend/src/routes/shopRoutes.ts` (was 2470 lines) has now also been split into `stockDataRoutes.ts`/`billingRoutes.ts`/`customerRoutes.ts`/`dashboardRoutes.ts`/`salesReportRoutes.ts`/`csvImportRoutes.ts` + a slimmed-down `shopRoutes.ts` (see Route files above), verified byte-identical against the original and clean `tsc`/`npm run build`. **Still not done**: the organic route-file cross-export helper sharing (see Architecture) has not been moved into a proper `lib/`/`services/` layer on the backend.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 **Deferred N+1 query patterns** (found and evaluated, deliberately left alone under the "zero logic change" constraint): the per-item `tx.batch.upsert`/`tx.batch.findFirst` loops in GRN/GRN-Without-PO/Adjust-With-PO approval flows (item counts are small in practice, and Prisma has no native bulk-upsert — a raw-SQL rewrite risks subtly different conflict semantics); the RTV-balance N+1 in the Adjust-With-PO/Adjustment-With-Others RTV-option pickers (shared helper, low request volume); Billing's sale-creation transaction (`billingRoutes.ts`) does one `tx.batch.findFirst` + `tx.batch.update` per invoice line rather than a single batched read — investigated for this session's perf pass but explicitly **not** batched: the per-line sequential update-then-read is what correctly handles the same `batchId` appearing twice in one sale (second occurrence sees the already-decremented stock); a naive upfront `findMany` would use a stale pre-decrement snapshot for both occurrences and risk silently overselling stock. Fixing any of these safely would require actual logic changes, not just query batching.
 
@@ -522,17 +417,10 @@ Simple daily expense ledger (new). **Backend**: `expenseRoutes.ts` (gated by `re
 - Sales Report's `PHARMACY_CANCEL_SUMMARY`/`PHARMACY_CANCEL_DETAILS` are stubbed empty and never read `SaleItemCancellation`, despite Invoice Item Cancel now populating it. Same for the cancel/refund columns (`current/previousCancel`, `*CogsCancel`, `*VatCancel`, `*Refund`) on every other Sales Report variant — all hardcoded `0`.
 - CSV import routes (`/products/import`, `/batches/import`) have no `requirePermission` gate.
 - Superadmin's `DELETE /shops/:id` doesn't clean up rows in the newer modules (GRN/VST/RTV/AdjOthers/PurchaseRequisition/Employee/SaleItemCancellation) — risk of FK errors or orphaned data.
-<<<<<<< HEAD
 - `MediboxEmployeeSalaryView.tsx` and `MediboxPharmacyDashboardView.tsx` have their own locally-defined `fmt` with slightly different behavior (no `maximumFractionDigits`) than the shared `lib/format.ts` — intentionally left unmerged since unifying them would change their number output for values with more decimal places.
 - Two different "combobox" components share similar names/purpose but are NOT interchangeable: `components/admin/SearchableSelect.tsx` (older, text-input based, used by Stock Data/Expire Products) vs. `components/admin/ComboSelect.tsx` (newer, button+dropdown-panel, used by the GRN/VST/RTV/Adjust/PO family). `MediboxPurchaseRequisitionView/SearchableSelect.tsx` also keeps its own richer local combobox (keyboard arrow-nav, `onEnterSelect`) rather than using either shared one — only its `ComboOption` type was deduplicated.
 - `statusLabel`-style status-to-text mapper functions are duplicated across ~6 files (GRN/VST/RTV/Adjust status enums) and intentionally left unmerged — each enum's states/wording differ enough that unifying risked a wrong label appearing somewhere.
 - `MediboxBillingView`'s item-search dropdown and `TypeaheadInput` still don't reuse the shared `ComboSelect`/`ItemEntryTypeahead` components (predates them) — left as-is in Phase 3 since unifying would be a behavior change, not just a file move.
-=======
-- `AsterEmployeeSalaryView.tsx` and `AsterPharmacyDashboardView.tsx` have their own locally-defined `fmt` with slightly different behavior (no `maximumFractionDigits`) than the shared `lib/format.ts` — intentionally left unmerged since unifying them would change their number output for values with more decimal places.
-- Two different "combobox" components share similar names/purpose but are NOT interchangeable: `components/admin/SearchableSelect.tsx` (older, text-input based, used by Stock Data/Expire Products) vs. `components/admin/ComboSelect.tsx` (newer, button+dropdown-panel, used by the GRN/VST/RTV/Adjust/PO family). `AsterPurchaseRequisitionView/SearchableSelect.tsx` also keeps its own richer local combobox (keyboard arrow-nav, `onEnterSelect`) rather than using either shared one — only its `ComboOption` type was deduplicated.
-- `statusLabel`-style status-to-text mapper functions are duplicated across ~6 files (GRN/VST/RTV/Adjust status enums) and intentionally left unmerged — each enum's states/wording differ enough that unifying risked a wrong label appearing somewhere.
-- `AsterBillingView`'s item-search dropdown and `TypeaheadInput` still don't reuse the shared `ComboSelect`/`ItemEntryTypeahead` components (predates them) — left as-is in Phase 3 since unifying would be a behavior change, not just a file move.
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 - `services/shopApi/*.ts` still repeats the same `URLSearchParams`-building and blob-download boilerplate in nearly every method (seen 6× in the original `api.ts`) — not deduplicated in Phase 3 since that would be a code simplification beyond "move code," not just a file split.
 
 **Feature gaps found this session (still open)**:

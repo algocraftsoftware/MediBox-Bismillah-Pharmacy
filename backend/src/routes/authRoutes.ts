@@ -1,19 +1,12 @@
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import { prisma } from '../db';
-<<<<<<< HEAD
 import { asyncHandler } from '../asyncHandler';
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { signToken } from '../auth';
 
 const router = Router();
 
-<<<<<<< HEAD
 router.post('/superadmin/login', asyncHandler(async (req, res) => {
-=======
-router.post('/superadmin/login', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const { email, password } = req.body || {};
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
@@ -26,15 +19,9 @@ router.post('/superadmin/login', async (req, res) => {
 
   const token = signToken({ role: 'SUPER_ADMIN', sub: admin.id });
   res.json({ token, admin: { id: admin.id, name: admin.name, email: admin.email } });
-<<<<<<< HEAD
 }));
 
 router.post('/shop/:slug/login', asyncHandler(async (req, res) => {
-=======
-});
-
-router.post('/shop/:slug/login', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const { username, password } = req.body || {};
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
@@ -74,10 +61,6 @@ router.post('/shop/:slug/login', async (req, res) => {
     },
     shop: { id: shop.id, name: shop.name, slug: shop.slug, logoUrl: shop.logoUrl },
   });
-<<<<<<< HEAD
 }));
-=======
-});
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 export default router;

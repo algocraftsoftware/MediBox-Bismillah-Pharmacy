@@ -72,7 +72,6 @@ export async function requireShopAdmin(req: Request, res: Response, next: NextFu
   // Same case-insensitivity as the login route — slugs are stored lowercase,
   // but the URL segment a caller sends isn't guaranteed to match that case.
   const slug = req.params.slug.toLowerCase();
-<<<<<<< HEAD
 
   // Every shop-scoped router mounts this middleware, and Express runs each
   // router mounted on /api/shops/:slug in turn until one of them matches the
@@ -132,17 +131,6 @@ export async function requireShopAdmin(req: Request, res: Response, next: NextFu
     if (!token) return res.status(401).json({ error: 'Missing authorization token' });
     if (!payload) return res.status(401).json({ error: 'Invalid or expired token' });
 
-=======
-  const shop = await prisma.shop.findUnique({ where: { slug } });
-  if (!shop || shop.status !== 'ACTIVE') {
-    return res.status(404).json({ error: 'Shop not found' });
-  }
-
-  const token = extractToken(req);
-  if (!token) return res.status(401).json({ error: 'Missing authorization token' });
-  try {
-    const payload = jwt.verify(token, JWT_SECRET) as unknown as AuthPayload;
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     if (payload.role !== 'SHOP_ADMIN' || payload.shopId !== shop.id) {
       return res.status(403).json({ error: 'Access denied for this shop' });
     }
@@ -152,17 +140,9 @@ export async function requireShopAdmin(req: Request, res: Response, next: NextFu
     // 12h, so a Super Admin revoking a feature would otherwise not take effect
     // until the user happened to log in again — the API would keep serving a
     // feature the menu had already stopped showing.
-<<<<<<< HEAD
     if (!account || account.shopId !== shop.id) {
       return res.status(403).json({ error: 'Account not found for this shop' });
     }
-=======
-    const account = await prisma.shopAdmin.findFirst({
-      where: { id: payload.sub, shopId: shop.id },
-      select: { permissions: true, role: true },
-    });
-    if (!account) return res.status(403).json({ error: 'Account not found for this shop' });
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
     req.auth = { ...payload, permissions: account.permissions, adminRole: account.role };
     req.shop = {
@@ -177,13 +157,8 @@ export async function requireShopAdmin(req: Request, res: Response, next: NextFu
       phone: shop.phone,
     };
     next();
-<<<<<<< HEAD
   } catch (err) {
     next(err);
-=======
-  } catch {
-    return res.status(401).json({ error: 'Invalid or expired token' });
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   }
 }
 

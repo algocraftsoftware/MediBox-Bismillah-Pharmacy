@@ -34,13 +34,10 @@ model AdjOthers {
   txnNo                 String
   remarks               String?
   totalAdjustmentAmount Float          @default(0)
-<<<<<<< HEAD
   // The supplier's document for this adjustment (a scan, a photo or a PDF),
   // stored as a URL exactly like a GRN's — the Invoice button on the list opens
   // whatever was attached.
   attachmentUrl         String?
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   status                AdjStatus      @default(UNAPPROVED)
   createdById           Int
   createdBy             ShopAdmin      @relation("AdjOthersCreatedBy", fields: [createdById], references: [id])

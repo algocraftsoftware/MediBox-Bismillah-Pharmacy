@@ -5,15 +5,10 @@ import { ControlledClass } from "./core";
 // item-search combobox returns.
 export interface BatchSearchResult {
   batchId: number;
-<<<<<<< HEAD
   // Null for goods received without a batch number or expiry date — the
   // server does not pass on the placeholder it generates internally.
   batchNo: string | null;
   expiryDate: string | null;
-=======
-  batchNo: string;
-  expiryDate: string;
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   mrp: number;
   sellingPrice: number;
   purchasePrice: number;
@@ -48,15 +43,10 @@ export interface CartLine {
   uom: string;
   vatPct: number;
   discPct: number;
-<<<<<<< HEAD
   // Null for goods received without a batch number or expiry date — the
   // server does not pass on the placeholder it generates internally.
   batchNo: string | null;
   expiryDate: string | null;
-=======
-  batchNo: string;
-  expiryDate: string;
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   stockQty: number;
   mrp: number;
   sellingPrice: number;

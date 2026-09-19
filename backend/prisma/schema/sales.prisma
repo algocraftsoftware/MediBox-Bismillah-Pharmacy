@@ -45,10 +45,7 @@ model Sale {
 
   items         SaleItem[]
   cancellations SaleItemCancellation[]
-<<<<<<< HEAD
   duePayments     DuePayment[]
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
   @@unique([storeId, invoiceNo])
   @@index([shopId, createdAt])
@@ -85,7 +82,6 @@ model SaleItem {
 
   @@index([productId])
 }
-<<<<<<< HEAD
 
 // A payment taken against an invoice's outstanding due, after the sale itself.
 //
@@ -120,5 +116,3 @@ model DuePayment {
   @@index([storeId, createdAt])
   @@index([saleId])
 }
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77

@@ -1,11 +1,7 @@
 "use client";
 
 import React from "react";
-<<<<<<< HEAD
 import { ChevronRight, LayoutDashboard, Receipt, Settings, Users, Wallet2 } from "lucide-react";
-=======
-import { ChevronRight, Receipt, Settings, Users, Wallet2 } from "lucide-react";
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { useRouter } from "next/navigation";
 import { useShopSession } from "../../context/ShopSessionContext";
 import { DASHBOARD_FEATURES } from "../../lib/menuFeatures";
@@ -23,22 +19,14 @@ const DASHBOARD_BUTTON_ICONS: Record<string, React.ComponentType<{ className?: s
 // respective tab (with a live in-place switch if already there); the other
 // three highlight whichever one is currently open.
 export const DashboardTabBar: React.FC<{
-<<<<<<< HEAD
   activeRoute: "dashboard" | "finance-overview" | "employees" | "employee-salary" | "expenses" | "settings";
-=======
-  activeRoute: "dashboard" | "employees" | "employee-salary" | "expenses" | "settings";
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   collectionTab?: "collection" | "due";
   onCollectionTabChange?: (tab: "collection" | "due") => void;
 }> = ({ activeRoute, collectionTab, onCollectionTabChange }) => {
   const router = useRouter();
   const { shopSlug, permissions, adminRole } = useShopSession();
   // Granted features decide these buttons for every role, ADMIN included —
-<<<<<<< HEAD
   // matches MediboxHeader's MENU grid so a restricted feature disappears from
-=======
-  // matches AsterHeader's MENU grid so a restricted feature disappears from
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   // both places at once.
   const visibleDashboardButtons = DASHBOARD_FEATURES.filter((f) => permissions.includes(f.id));
 
@@ -93,7 +81,6 @@ export const DashboardTabBar: React.FC<{
         );
       })}
 
-<<<<<<< HEAD
       {/* The whole-shop overview — income, spend, profit, growth, the ledger and
           what the shop currently holds, all read live from the app's own
           records. Gated on the same granted-features rule as the rest. */}
@@ -112,8 +99,6 @@ export const DashboardTabBar: React.FC<{
         </button>
       )}
 
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       {/* Admin-only, and deliberately not part of DASHBOARD_FEATURES/the Staff
           permission checklist — changing account credentials is never
           grantable to Staff, unlike every other button in this row. */}

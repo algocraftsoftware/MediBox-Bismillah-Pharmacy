@@ -1,8 +1,5 @@
 import {
-<<<<<<< HEAD
   ContactListResponse,
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   PlatformStats,
   Sale,
   ShopAdminAccount,
@@ -11,11 +8,7 @@ import {
   Store,
   SuperAdminSession,
 } from "../types";
-<<<<<<< HEAD
 import { API_BASE_URL, ApiError, request } from "./shopApi/http";
-=======
-import { ApiError, request } from "./shopApi/http";
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { adjOthersApi } from "./shopApi/adjOthers";
 import { adjWithPoApi } from "./shopApi/adjWithPo";
 import { billingApi } from "./shopApi/billing";
@@ -26,10 +19,7 @@ import { dashboardApi } from "./shopApi/dashboard";
 import { editStockApi } from "./shopApi/editStock";
 import { employeesApi } from "./shopApi/employees";
 import { expensesApi } from "./shopApi/expenses";
-<<<<<<< HEAD
 import { financeApi } from "./shopApi/finance";
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { expireProductsApi } from "./shopApi/expireProducts";
 import { grnApi } from "./shopApi/grn";
 import { grnWithoutPoApi } from "./shopApi/grnWithoutPo";
@@ -40,10 +30,7 @@ import { salesApi } from "./shopApi/sales";
 import { salesReportApi } from "./shopApi/salesReport";
 import { soldProductLedgerApi } from "./shopApi/soldProductLedger";
 import { stockDataApi } from "./shopApi/stockData";
-<<<<<<< HEAD
 import { stockReportApi } from "./shopApi/stockReport";
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { vstApi } from "./shopApi/vst";
 
 export { ApiError };
@@ -104,7 +91,6 @@ export const authApi = {
 
 export const superAdminApi = {
   listShops: (token: string) => request<ShopSummary[]>("/superadmin/shops", token),
-<<<<<<< HEAD
 
   // The contact list: every registered patient across all shops, as name and
   // mobile only.
@@ -138,8 +124,6 @@ export const superAdminApi = {
     a.click();
     URL.revokeObjectURL(url);
   },
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   getPlatformStats: (token: string, params?: { from?: string; to?: string }) => {
     const qs = new URLSearchParams();
     if (params?.from) qs.set("from", params.from);
@@ -303,11 +287,8 @@ export function shopApi(slug: string, token: string) {
     ...stockDataApi(base, token),
     ...editStockApi(base, token),
     ...createStockApi(base, token),
-<<<<<<< HEAD
     ...stockReportApi(base, token),
     ...financeApi(base, token),
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     ...expireProductsApi(base, token),
     ...soldProductLedgerApi(base, token),
     ...customerApi(base, token),

@@ -1,12 +1,9 @@
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import { prisma } from '../db';
-<<<<<<< HEAD
 import * as XLSX from 'xlsx';
 import { asyncHandler } from '../asyncHandler';
 import { exportLimiter } from '../middleware/rateLimit';
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { requireSuperAdmin } from '../auth';
 import { uploadLogo } from '../uploads';
 import { uploadLogoBuffer, uploadSignatureBuffer } from '../cloudinary';
@@ -58,11 +55,7 @@ function triggerCatalogClone(shopId: number, storeId: number) {
     });
 }
 
-<<<<<<< HEAD
 router.get('/shops', asyncHandler(async (_req, res) => {
-=======
-router.get('/shops', async (_req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const shops = await prisma.shop.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
@@ -112,15 +105,9 @@ router.get('/shops', async (_req, res) => {
   );
 
   res.json(withTotals);
-<<<<<<< HEAD
 }));
 
 router.get('/stats', asyncHandler(async (req, res) => {
-=======
-});
-
-router.get('/stats', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const { from, to } = req.query;
   const where: any = {};
   if (from || to) {
@@ -154,11 +141,7 @@ router.get('/stats', async (req, res) => {
       card: collectionAgg._sum.paidCard || 0,
     }
   });
-<<<<<<< HEAD
 }));
-=======
-});
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 const uploadShopImages = uploadLogo.fields([
   { name: 'logo', maxCount: 1 },
@@ -167,11 +150,7 @@ const uploadShopImages = uploadLogo.fields([
   { name: 'signatureApprovedBy', maxCount: 1 },
 ]);
 
-<<<<<<< HEAD
 router.post('/shops', uploadShopImages, asyncHandler(async (req, res) => {
-=======
-router.post('/shops', uploadShopImages, async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const {
     code,
     name,
@@ -288,15 +267,9 @@ router.post('/shops', uploadShopImages, async (req, res) => {
   triggerCatalogClone(shop.id, storeId);
 
   res.status(201).json(shop);
-<<<<<<< HEAD
 }));
 
 router.patch('/shops/:id/status', asyncHandler(async (req, res) => {
-=======
-});
-
-router.patch('/shops/:id/status', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const id = Number(req.params.id);
   const shop = await prisma.shop.findUnique({ where: { id } });
   if (!shop) return res.status(404).json({ error: 'Shop not found' });
@@ -306,17 +279,10 @@ router.patch('/shops/:id/status', async (req, res) => {
     data: { status: shop.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' },
   });
   res.json(updated);
-<<<<<<< HEAD
 }));
 
 // Full shop details (with its admin + staff accounts) for the super admin edit form.
 router.get('/shops/:id', asyncHandler(async (req, res) => {
-=======
-});
-
-// Full shop details (with its admin + staff accounts) for the super admin edit form.
-router.get('/shops/:id', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid shop id' });
   const shop = await prisma.shop.findUnique({
@@ -328,22 +294,14 @@ router.get('/shops/:id', async (req, res) => {
   });
   if (!shop) return res.status(404).json({ error: 'Shop not found' });
   res.json(shop);
-<<<<<<< HEAD
 }));
-=======
-});
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 // Edit shop details (name, slug, status, logo, signatures) and its Admin +
 // Staff accounts. Optional multipart fields `logo`/`signaturePreparedBy`/
 // `signatureReviewedBy`/`signatureApprovedBy`; each account's fields are
 // only applied when sent, so leaving username/password blank keeps the
 // existing values.
-<<<<<<< HEAD
 router.put('/shops/:id', uploadShopImages, asyncHandler(async (req, res) => {
-=======
-router.put('/shops/:id', uploadShopImages, async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid shop id' });
   const shop = await prisma.shop.findUnique({ where: { id }, include: { admins: true } });
@@ -426,11 +384,7 @@ router.put('/shops/:id', uploadShopImages, async (req, res) => {
   }
 
   res.json(updated);
-<<<<<<< HEAD
 }));
-=======
-});
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 // =======================================================
 // STAFF ACCOUNTS — a shop can have any number of STAFF logins
@@ -441,11 +395,7 @@ router.put('/shops/:id', uploadShopImages, async (req, res) => {
 // suspended shop.
 // =======================================================
 
-<<<<<<< HEAD
 router.post('/shops/:id/staff', asyncHandler(async (req, res) => {
-=======
-router.post('/shops/:id/staff', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const shopId = Number(req.params.id);
   if (!Number.isInteger(shopId)) return res.status(400).json({ error: 'Invalid shop id' });
   const shop = await prisma.shop.findUnique({ where: { id: shopId } });
@@ -471,15 +421,9 @@ router.post('/shops/:id/staff', async (req, res) => {
     select: { id: true, name: true, username: true, role: true, permissions: true, status: true },
   });
   res.status(201).json(created);
-<<<<<<< HEAD
 }));
 
 router.put('/shops/:id/staff/:staffId', asyncHandler(async (req, res) => {
-=======
-});
-
-router.put('/shops/:id/staff/:staffId', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const shopId = Number(req.params.id);
   const staffId = Number(req.params.staffId);
   if (!Number.isInteger(shopId) || !Number.isInteger(staffId)) return res.status(400).json({ error: 'Invalid id' });
@@ -503,15 +447,9 @@ router.put('/shops/:id/staff/:staffId', async (req, res) => {
     select: { id: true, name: true, username: true, role: true, permissions: true, status: true },
   });
   res.json(updated);
-<<<<<<< HEAD
 }));
 
 router.patch('/shops/:id/staff/:staffId/status', asyncHandler(async (req, res) => {
-=======
-});
-
-router.patch('/shops/:id/staff/:staffId/status', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const shopId = Number(req.params.id);
   const staffId = Number(req.params.staffId);
   if (!Number.isInteger(shopId) || !Number.isInteger(staffId)) return res.status(400).json({ error: 'Invalid id' });
@@ -524,20 +462,12 @@ router.patch('/shops/:id/staff/:staffId/status', async (req, res) => {
     select: { id: true, name: true, username: true, role: true, permissions: true, status: true },
   });
   res.json(updated);
-<<<<<<< HEAD
 }));
-=======
-});
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 // Add a new branch/store under an existing shop — Super Admin only (there is
 // no shop-admin-facing route that creates a Store). A new branch needs its
 // own InvoiceCounter row, same as the "Main Store" seeded at shop creation.
-<<<<<<< HEAD
 router.post('/shops/:id/stores', asyncHandler(async (req, res) => {
-=======
-router.post('/shops/:id/stores', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const shopId = Number(req.params.id);
   if (!Number.isInteger(shopId)) return res.status(400).json({ error: 'Invalid shop id' });
   const shop = await prisma.shop.findUnique({ where: { id: shopId } });
@@ -562,26 +492,17 @@ router.post('/shops/:id/stores', async (req, res) => {
   });
 
   res.status(201).json(store);
-<<<<<<< HEAD
 }));
-=======
-});
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 // Delete a shop and all of its data. Done manually in dependency order
 // because some relations (e.g. SaleItem -> Product/Batch) are RESTRICT and
 // would block a naive cascade at the DB level.
-<<<<<<< HEAD
 router.delete('/shops/:id', asyncHandler(async (req, res) => {
-=======
-router.delete('/shops/:id', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid shop id' });
   const shop = await prisma.shop.findUnique({ where: { id } });
   if (!shop) return res.status(404).json({ error: 'Shop not found' });
 
-<<<<<<< HEAD
   // Deleting a shop has to clear every table that hangs off it, in an order the
   // database will accept. Most of those foreign keys are RESTRICT rather than
   // CASCADE, and PostgreSQL checks RESTRICT immediately — it will not let a row
@@ -655,37 +576,6 @@ router.delete('/shops/:id', async (req, res) => {
 }));
 
 router.get('/shops/:id/sales-summary', asyncHandler(async (req, res) => {
-=======
-  await prisma.$transaction(
-    async (tx) => {
-      await tx.saleItem.deleteMany({ where: { sale: { shopId: id } } });
-      await tx.sale.deleteMany({ where: { shopId: id } });
-      await tx.batch.deleteMany({ where: { product: { shopId: id } } });
-      await tx.product.deleteMany({ where: { shopId: id } });
-      await tx.customer.deleteMany({ where: { shopId: id } });
-      await tx.shopAdmin.deleteMany({ where: { shopId: id } });
-      await tx.invoiceCounter.deleteMany({ where: { store: { shopId: id } } });
-      await tx.store.deleteMany({ where: { shopId: id } });
-      await tx.subDepartment.deleteMany({ where: { department: { shopId: id } } });
-      await tx.department.deleteMany({ where: { shopId: id } });
-      await tx.supplier.deleteMany({ where: { shopId: id } });
-      await tx.shopSetting.deleteMany({ where: { shopId: id } });
-      await tx.customerCounter.deleteMany({ where: { shopId: id } });
-      await tx.shop.delete({ where: { id } });
-    },
-    // A fully-cloned shop carries ~17k products — well past Prisma's default
-    // 5s interactive-transaction timeout, which fails this delete outright
-    // (verified: P2028 "Transaction not found" against a real 17k-product
-    // shop). Same timeout already used elsewhere in this file for
-    // similarly large multi-step transactions.
-    { timeout: 30000, maxWait: 10000 },
-  );
-
-  res.json({ ok: true });
-});
-
-router.get('/shops/:id/sales-summary', async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const shopId = Number(req.params.id);
   const { from, to } = req.query;
 
@@ -721,7 +611,6 @@ router.get('/shops/:id/sales-summary', async (req, res) => {
     totalProfit: totalSales - cogs,
     recentSales: recent,
   });
-<<<<<<< HEAD
 }));
 
 
@@ -792,8 +681,4 @@ router.get('/contacts/export', exportLimiter, asyncHandler(async (req, res) => {
   res.send(buffer);
 }));
 
-=======
-});
-
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 export default router;

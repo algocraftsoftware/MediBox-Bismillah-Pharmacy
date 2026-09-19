@@ -1,15 +1,9 @@
 import { Router } from 'express';
 import { prisma } from '../db';
-<<<<<<< HEAD
 import { requireAdminRole, requirePermission, requireShopAdmin } from '../auth';
 import { adminSelect } from './purchaseRequisitionRoutes';
 import { asyncHandler } from '../asyncHandler';
 import { restoreIssuedStock, unapproveError, CLEAR_APPROVAL } from './approvalReversal';
-=======
-import { requirePermission, requireShopAdmin } from '../auth';
-import { adminSelect } from './purchaseRequisitionRoutes';
-import { asyncHandler } from '../asyncHandler';
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 const router = Router({ mergeParams: true });
 router.use(requireShopAdmin);
@@ -142,11 +136,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid VST id' });
   const vst = await prisma.vst.findFirst({
     where: { id, shopId: req.shop!.id },
-<<<<<<< HEAD
     include: { ...vstInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-    include: { ...vstInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
   if (!vst) return res.status(404).json({ error: 'VST not found' });
   res.json(vst);
@@ -222,11 +212,7 @@ router.post('/', asyncHandler(async (req, res) => {
             totalAmount,
             items: { create: pricedItems },
           },
-<<<<<<< HEAD
           include: { ...vstInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-          include: { ...vstInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         });
       },
       { timeout: 20000, maxWait: 10000 },
@@ -265,11 +251,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
             ...(remarks !== undefined ? { remarks: remarks || null } : {}),
             ...(Array.isArray(items) ? { totalAmount, items: { create: pricedItems } } : {}),
           },
-<<<<<<< HEAD
           include: { ...vstInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-          include: { ...vstInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         });
       },
       { timeout: 20000, maxWait: 10000 },
@@ -290,11 +272,7 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   if (existing.status === 'APPROVED') {
     const already = await prisma.vst.findUnique({
       where: { id },
-<<<<<<< HEAD
       include: { ...vstInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-      include: { ...vstInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     });
     return res.json(already);
   }
@@ -318,11 +296,7 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
         return tx.vst.update({
           where: { id },
           data: { status: 'APPROVED', approvedById: req.auth!.sub as number, approvedAt: new Date() },
-<<<<<<< HEAD
           include: { ...vstInclude, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-          include: { ...vstInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
         });
       },
       { timeout: 20000, maxWait: 10000 },
@@ -334,7 +308,6 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   }
 }));
 
-<<<<<<< HEAD
 // Un-approve a VST: put the transferred stock back and reopen the document.
 // Admin-only — this moves stock.
 router.post('/:id/unapprove', requireAdminRole, asyncHandler(async (req, res) => {
@@ -378,6 +351,4 @@ router.post('/:id/unapprove', requireAdminRole, asyncHandler(async (req, res) =>
   }
 }));
 
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 export default router;

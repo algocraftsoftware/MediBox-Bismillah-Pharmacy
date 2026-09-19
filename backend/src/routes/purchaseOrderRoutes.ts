@@ -1,10 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db';
-<<<<<<< HEAD
 import { requireAdminRole, requirePermission, requireShopAdmin } from '../auth';
-=======
-import { requirePermission, requireShopAdmin } from '../auth';
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { adminSelect, priceItems } from './purchaseRequisitionRoutes';
 import { asyncHandler } from '../asyncHandler';
 
@@ -69,7 +65,6 @@ router.get('/:id', asyncHandler(async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid order id' });
   const order = await prisma.purchaseRequisition.findFirst({
     where: { id, shopId: req.shop!.id, status: { in: ['APPROVED', 'FINAL_APPROVED'] } },
-<<<<<<< HEAD
     include: { ...orderInclude, items: {
         // Alphabetical by product name. A requisition is built in whatever
         // order items were picked; a purchase order and the GRN raised
@@ -78,9 +73,6 @@ router.get('/:id', asyncHandler(async (req, res) => {
         orderBy: { product: { name: 'asc' } },
         include: { product: { include: { department: { select: { name: true } } } } },
       } },
-=======
-    include: { ...orderInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
   if (!order) return res.status(404).json({ error: 'Purchase order not found' });
   res.json(order);
@@ -121,7 +113,6 @@ router.put('/:id', asyncHandler(async (req, res) => {
           ...(remarks !== undefined ? { remarks: remarks || null } : {}),
           ...(Array.isArray(items) ? { totalPPAmount, totalMrpAmount, avgGpPct, items: { create: validItems } } : {}),
         },
-<<<<<<< HEAD
         include: { ...orderInclude, items: {
         // Alphabetical by product name. A requisition is built in whatever
         // order items were picked; a purchase order and the GRN raised
@@ -130,9 +121,6 @@ router.put('/:id', asyncHandler(async (req, res) => {
         orderBy: { product: { name: 'asc' } },
         include: { product: { include: { department: { select: { name: true } } } } },
       } },
-=======
-        include: { ...orderInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       });
     },
     { timeout: 20000, maxWait: 10000 },
@@ -152,7 +140,6 @@ router.post('/:id/final-approve', asyncHandler(async (req, res) => {
   if (existing.status === 'FINAL_APPROVED') {
     const already = await prisma.purchaseRequisition.findUnique({
       where: { id },
-<<<<<<< HEAD
       include: { ...orderInclude, items: {
         // Alphabetical by product name. A requisition is built in whatever
         // order items were picked; a purchase order and the GRN raised
@@ -161,16 +148,12 @@ router.post('/:id/final-approve', asyncHandler(async (req, res) => {
         orderBy: { product: { name: 'asc' } },
         include: { product: { include: { department: { select: { name: true } } } } },
       } },
-=======
-      include: { ...orderInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     });
     return res.json(already);
   }
 
   const updated = await prisma.$transaction(
     async (tx) => {
-<<<<<<< HEAD
       // Reuse the number if this order has been final-approved before and
       // since un-approved — drawing a fresh one each time would leave gaps in
       // the shop's PO sequence.
@@ -183,14 +166,6 @@ router.post('/:id/final-approve', asyncHandler(async (req, res) => {
         });
         orderNo = `PO${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(counter.value).padStart(6, '0')}`;
       }
-=======
-      const counter = await tx.orderCounter.upsert({
-        where: { shopId },
-        update: { value: { increment: 1 } },
-        create: { shopId, value: 1 },
-      });
-      const orderNo = `PO${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(counter.value).padStart(6, '0')}`;
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
       return tx.purchaseRequisition.update({
         where: { id },
@@ -200,7 +175,6 @@ router.post('/:id/final-approve', asyncHandler(async (req, res) => {
           finalApprovedById: req.auth!.sub as number,
           finalApprovedAt: new Date(),
         },
-<<<<<<< HEAD
         include: { ...orderInclude, items: {
         // Alphabetical by product name. A requisition is built in whatever
         // order items were picked; a purchase order and the GRN raised
@@ -209,9 +183,6 @@ router.post('/:id/final-approve', asyncHandler(async (req, res) => {
         orderBy: { product: { name: 'asc' } },
         include: { product: { include: { department: { select: { name: true } } } } },
       } },
-=======
-        include: { ...orderInclude, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       });
     },
     { timeout: 20000, maxWait: 10000 },
@@ -220,7 +191,6 @@ router.post('/:id/final-approve', asyncHandler(async (req, res) => {
   res.json(updated);
 }));
 
-<<<<<<< HEAD
 // Un-approve a purchase order: FINAL_APPROVED back to APPROVED, which returns
 // it to "Pending" in this list and reopens final approval. Admin-only.
 //
@@ -262,6 +232,4 @@ router.post('/:id/unapprove', requireAdminRole, asyncHandler(async (req, res) =>
   res.json(updated);
 }));
 
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 export default router;

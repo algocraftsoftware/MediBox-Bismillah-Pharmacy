@@ -43,13 +43,8 @@ frontend/
       [shopSlug]/(app)/     # auth-guarded shop app: billing, customer-registration,
                              # dashboard, sales-report, and a catch-all "coming soon"
                              # page for modules not yet built (GRN, stock adjustment, etc.)
-<<<<<<< HEAD
     components/admin/       # MediboxHeader, MediboxBillingView, MediboxCustomerRegistrationView,
                              # MediboxPharmacyDashboardView, MediboxSalesReportView
-=======
-    components/admin/       # AsterHeader, AsterBillingView, AsterCustomerRegistrationView,
-                             # AsterPharmacyDashboardView, AsterSalesReportView
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     context/ShopSessionContext.tsx  # shop auth/session + selected-store state
     services/api.ts          # typed fetch wrapper for the Express API
 ```
@@ -89,11 +84,7 @@ This project uses **pnpm** (root, `backend/`, and `frontend/` pin `packageManage
    ```
    Creates:
    - Super Admin: `superadmin@gmail.com` / `superadmin123`
-<<<<<<< HEAD
    - Shop `shop` ("Medibox Pharmacy Bangladesh") with two admin logins at `/shop/login`: `admin` / `admin123` and `shariar` / `Admin@123`
-=======
-   - Shop `shop` ("Aster Pharmacy Bangladesh") with two admin logins at `/shop/login`: `admin` / `admin123` and `shariar` / `Admin@123`
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
    - 3 stores: KALSHI PHARMACY (MIRPUR), DHANMONDI BRANCH #1, GULSHAN MAIN PHARMA
 
 5. **Import real product/stock data** — drop a spreadsheet at `backend/data/Medicine Data.xlsx` (this path is gitignored) and run:

@@ -1,13 +1,8 @@
 import { Router } from 'express';
 import { prisma } from '../db';
-<<<<<<< HEAD
 import { requireAdminRole, requirePermission, requireShopAdmin } from '../auth';
 import { asyncHandler } from '../asyncHandler';
 import { CLEAR_APPROVAL } from './approvalReversal';
-=======
-import { requirePermission, requireShopAdmin } from '../auth';
-import { asyncHandler } from '../asyncHandler';
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 const router = Router({ mergeParams: true });
 router.use(requireShopAdmin);
@@ -89,7 +84,6 @@ router.get('/items', asyncHandler(async (req, res) => {
       COALESCE(cons.consumed, 0)::float as "consumptionPieces"
     FROM "Product" p
     JOIN "Department" d ON d.id = p."departmentId"
-<<<<<<< HEAD
     LEFT JOIN LATERAL (
       -- One row per product, never one per batch. This used to be a plain
       -- LEFT JOIN on "Batch", so a product holding two batches in the selected
@@ -107,9 +101,6 @@ router.get('/items', asyncHandler(async (req, res) => {
       FROM "Batch" b2
       WHERE b2."productId" = p.id AND b2."storeId" = ${storeIdParam}
     ) b ON true
-=======
-    LEFT JOIN "Batch" b ON b."productId" = p.id AND b."storeId" = ${storeIdParam}
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     LEFT JOIN LATERAL (
       SELECT b2."purchasePrice", b2.mrp
       FROM "Batch" b2
@@ -131,7 +122,6 @@ router.get('/items', asyncHandler(async (req, res) => {
     SELECT COUNT(*)::int as total
     FROM "Product" p
     JOIN "Department" d ON d.id = p."departmentId"
-<<<<<<< HEAD
     LEFT JOIN LATERAL (
       -- Same aggregate as the page query above: counting the plain join
       -- counted batches, not products.
@@ -139,9 +129,6 @@ router.get('/items', asyncHandler(async (req, res) => {
       FROM "Batch" b2
       WHERE b2."productId" = p.id AND b2."storeId" = ${storeIdParam}
     ) b ON true
-=======
-    LEFT JOIN "Batch" b ON b."productId" = p.id AND b."storeId" = ${storeIdParam}
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     WHERE ${whereSql}
   `;
 
@@ -202,11 +189,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
       supplier: true,
       createdBy: { select: adminSelect },
       approvedBy: { select: adminSelect },
-<<<<<<< HEAD
       items: { include: { product: { include: { department: { select: { name: true } } } } } },
-=======
-      items: { include: { product: true } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     },
   });
   if (!requisition) return res.status(404).json({ error: 'Requisition not found' });
@@ -316,11 +299,7 @@ router.post('/', asyncHandler(async (req, res) => {
           avgGpPct,
           items: { create: validItems },
         },
-<<<<<<< HEAD
         include: { store: true, supplier: true, createdBy: { select: adminSelect }, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-        include: { store: true, supplier: true, createdBy: { select: adminSelect }, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       });
     },
     { timeout: 20000, maxWait: 10000 },
@@ -368,11 +347,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
           ...(remarks !== undefined ? { remarks: remarks || null } : {}),
           ...(Array.isArray(items) ? { totalPPAmount, totalMrpAmount, avgGpPct, items: { create: validItems } } : {}),
         },
-<<<<<<< HEAD
         include: { store: true, supplier: true, createdBy: { select: adminSelect }, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-        include: { store: true, supplier: true, createdBy: { select: adminSelect }, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       });
     },
     { timeout: 20000, maxWait: 10000 },
@@ -389,11 +364,7 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   if (existing.status !== 'UNAPPROVED') {
     const current = await prisma.purchaseRequisition.findUnique({
       where: { id },
-<<<<<<< HEAD
       include: { store: true, supplier: true, createdBy: { select: adminSelect }, approvedBy: { select: adminSelect }, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
-=======
-      include: { store: true, supplier: true, createdBy: { select: adminSelect }, approvedBy: { select: adminSelect }, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     });
     return res.json(current);
   }
@@ -401,7 +372,6 @@ router.post('/:id/approve', asyncHandler(async (req, res) => {
   const updated = await prisma.purchaseRequisition.update({
     where: { id },
     data: { status: 'APPROVED', approvedById: req.auth!.sub as number, approvedAt: new Date() },
-<<<<<<< HEAD
     include: { store: true, supplier: true, createdBy: { select: adminSelect }, approvedBy: { select: adminSelect }, items: { include: { product: { include: { department: { select: { name: true } } } } } } },
   });
   res.json(updated);
@@ -437,9 +407,6 @@ router.post('/:id/unapprove', requireAdminRole, asyncHandler(async (req, res) =>
       createdBy: { select: adminSelect }, approvedBy: { select: adminSelect },
       items: { include: { product: { include: { department: { select: { name: true } } } } } },
     },
-=======
-    include: { store: true, supplier: true, createdBy: { select: adminSelect }, approvedBy: { select: adminSelect }, items: { include: { product: true } } },
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   });
   res.json(updated);
 }));

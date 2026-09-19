@@ -13,7 +13,6 @@ export const fmt4 = (n: number | null | undefined) =>
 // what the user sees in an editable cell. 4dp matches the fmt4 display used
 // for money totals, so nothing visible is lost.
 export const round4 = (n: number) => Math.round(n * 10000) / 10000;
-<<<<<<< HEAD
 
 // Reference fields — document numbers (GRN/PO/VST/RTV/ADJ), invoice numbers,
 // supplier names, item codes, product names and batch numbers — print in
@@ -26,5 +25,3 @@ export const round4 = (n: number) => Math.round(n * 10000) / 10000;
 // the same whichever way the value was entered, and changes nothing about what
 // is stored or searched.
 export const upper = (v: string | null | undefined) => (v ?? "").toUpperCase();
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77

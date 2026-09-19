@@ -1,9 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db';
-<<<<<<< HEAD
 import { asyncHandler } from '../asyncHandler';
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 import { requirePermission, requireShopAdmin } from '../auth';
 
 const router = Router({ mergeParams: true });
@@ -43,7 +40,6 @@ async function aggregateSales(
   const adjWhere: any = { shopId, status: 'APPROVED', approvedAt: { gte: from, lte: to } };
   if (storeId) adjWhere.storeId = storeId;
 
-<<<<<<< HEAD
   // Due collections are counted on the day they were taken, not the day the
   // invoice was raised.
   //
@@ -64,9 +60,6 @@ async function aggregateSales(
 
   const [salesAgg, collectionAgg, adjWithPoAgg, adjOthersAgg, mobileBreakdownRaw, cardBreakdownRaw,
          dueOnWindowSales, dueCollected] = await Promise.all([
-=======
-  const [salesAgg, collectionAgg, adjWithPoAgg, adjOthersAgg, mobileBreakdownRaw, cardBreakdownRaw] = await Promise.all([
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     prisma.sale.aggregate({ where, _sum: { netAmount: true }, _count: true }),
     prisma.sale.aggregate({
       where: { ...where, paidAmount: { gt: 0 } },
@@ -89,7 +82,6 @@ async function aggregateSales(
           _sum: { paidCard: true },
         })
       : Promise.resolve([]),
-<<<<<<< HEAD
     prisma.duePayment.aggregate({
       where: dueOnWindowSalesWhere,
       _sum: { amount: true, paidCash: true, paidMobileBanking: true, paidCard: true },
@@ -99,13 +91,10 @@ async function aggregateSales(
       _sum: { amount: true, paidCash: true, paidMobileBanking: true, paidCard: true },
       _count: true,
     }),
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   ]);
 
   const adjustment = (adjWithPoAgg._sum.rtvAdjustmentValue || 0) + (adjOthersAgg._sum.totalAdjustmentAmount || 0);
 
-<<<<<<< HEAD
   // Move each mode's due portion off the sale's date and onto the collection's.
   const shift = (atTill: number, laterDue: number, collectedNow: number) =>
     atTill - laterDue + collectedNow;
@@ -118,8 +107,6 @@ async function aggregateSales(
     card: dueCollected._sum.paidCard || 0,
   };
 
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const mobileByType = mobileBreakdownRaw
     .map((r) => ({ type: r.mobileBankingType || 'Not Specified', amount: r._sum.paidMobileBanking || 0 }))
     .sort((a, b) => b.amount - a.amount);
@@ -131,7 +118,6 @@ async function aggregateSales(
   return {
     sales: { total: salesAgg._sum.netAmount || 0, invoiceCount: salesAgg._count },
     collection: {
-<<<<<<< HEAD
       total: shift(
         collectionAgg._sum.paidAmount || 0,
         dueOnWindowSales._sum.amount || 0,
@@ -147,14 +133,6 @@ async function aggregateSales(
       card: shift(collectionAgg._sum.paidCard || 0, dueOnWindowSales._sum.paidCard || 0, dueCollection.card),
       adjustment,
       dueCollection,
-=======
-      total: (collectionAgg._sum.paidAmount || 0) + adjustment,
-      invoiceCount: collectionAgg._count,
-      cash: collectionAgg._sum.paidCash || 0,
-      mobile: collectionAgg._sum.paidMobileBanking || 0,
-      card: collectionAgg._sum.paidCard || 0,
-      adjustment,
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
       mobileByType,
       cardByType,
     },
@@ -183,7 +161,6 @@ export async function aggregateCogs(shopId: number, storeId: number | undefined,
   return rows[0]?.cogs || 0;
 }
 
-<<<<<<< HEAD
 // Sales split between the Pharma and Non-Pharma departments, for the
 // dashboard's category donut. Reads the department off the product rather than
 // SaleItem.departmentSnapshot so a department renamed after the fact still
@@ -218,9 +195,6 @@ export async function aggregateCategorySplit(
 }
 
 router.get('/dashboard', requirePermission('dashboard'), asyncHandler(async (req, res) => {
-=======
-router.get('/dashboard', requirePermission('dashboard'), async (req, res) => {
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   const { storeId, from, to } = req.query;
   const shopId = req.shop!.id;
   const storeFilter = storeId ? Number(storeId) : undefined;
@@ -229,24 +203,12 @@ router.get('/dashboard', requirePermission('dashboard'), async (req, res) => {
   const toDate = to ? new Date(`${String(to)}T23:59:59.999Z`) : new Date();
   const now = new Date();
 
-<<<<<<< HEAD
-=======
-  const [filtered, today, month, year, cogs] = await Promise.all([
-    aggregateSales(shopId, storeFilter, fromDate, toDate, true), // true = also fetch mobile/card breakdowns
-    aggregateSales(shopId, storeFilter, dayStart(now), new Date()),
-    aggregateSales(shopId, storeFilter, new Date(now.getFullYear(), now.getMonth(), 1), new Date()),
-    aggregateSales(shopId, storeFilter, new Date(now.getFullYear(), 0, 1), new Date()),
-    aggregateCogs(shopId, storeFilter, fromDate, toDate),
-  ]);
-
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   // Purchase/Payment now come from the GRN module: "purchase" is the net
   // value of approved GRNs; "payment" is what was actually paid out (any GRN
   // whose payment type is not on credit).
   const grnWhere: any = { shopId, status: 'APPROVED', approvedAt: { gte: fromDate, lte: toDate } };
   if (storeFilter) grnWhere.storeId = storeFilter;
 
-<<<<<<< HEAD
   // One wave, not two. The GRN aggregates below don't depend on the sales ones
   // above, but they used to be awaited afterwards, so the page paid a second
   // full round trip to the database for nothing.
@@ -257,9 +219,6 @@ router.get('/dashboard', requirePermission('dashboard'), async (req, res) => {
     aggregateSales(shopId, storeFilter, new Date(now.getFullYear(), 0, 1), new Date()),
     aggregateCogs(shopId, storeFilter, fromDate, toDate),
     aggregateCategorySplit(shopId, storeFilter, fromDate, toDate),
-=======
-  const [purchaseAgg, paymentAgg] = await Promise.all([
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
     prisma.grn.aggregate({ where: grnWhere, _sum: { netAmount: true }, _count: true }),
     prisma.grn.aggregate({ where: { ...grnWhere, paymentType: { not: 'Credit' } }, _sum: { netAmount: true }, _count: true }),
   ]);
@@ -272,13 +231,8 @@ router.get('/dashboard', requirePermission('dashboard'), async (req, res) => {
     purchase: { total: purchaseAgg._sum.netAmount || 0, invoiceCount: purchaseAgg._count },
     payment: { total: paymentAgg._sum.netAmount || 0, invoiceCount: paymentAgg._count },
     profit: { total: filtered.sales.total - cogs, cogs, salesTotal: filtered.sales.total },
-<<<<<<< HEAD
     categorySplit,
   });
 }));
-=======
-  });
-});
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 
 export default router;

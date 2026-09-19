@@ -7,11 +7,8 @@ export * from "./sales";
 export * from "./dashboard";
 export * from "./salesReport";
 export * from "./stockData";
-<<<<<<< HEAD
 export * from "./stockReport";
 export * from "./finance";
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
 export * from "./expireProducts";
 export * from "./soldProductLedger";
 export * from "./vst";

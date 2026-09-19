@@ -19,9 +19,6 @@ export function vstApi(base: string, token: string) {
     updateVst: (id: number, data: Record<string, unknown>) =>
       request<Vst>(`${base}/vst/${id}`, token, { method: "PUT", body: JSON.stringify(data) }),
     approveVst: (id: number) => request<Vst>(`${base}/vst/${id}/approve`, token, { method: "POST" }),
-<<<<<<< HEAD
     unapproveVst: (id: number) => request<Vst>(`${base}/vst/${id}/unapprove`, token, { method: "POST" }),
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   };
 }

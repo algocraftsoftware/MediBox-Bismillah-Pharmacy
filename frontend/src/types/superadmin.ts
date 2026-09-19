@@ -26,7 +26,6 @@ export interface PlatformStats {
     card: number;
   };
 }
-<<<<<<< HEAD
 
 // A patient as the super admin sees them: name and mobile only, plus which
 // shop registered them. Deliberately nothing else — this is a cross-shop view
@@ -44,5 +43,3 @@ export interface ContactListResponse {
   page: number;
   pageSize: number;
 }
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77

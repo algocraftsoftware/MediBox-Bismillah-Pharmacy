@@ -16,10 +16,7 @@ export function purchaseOrderApi(base: string, token: string) {
       }),
     finalApprovePurchaseOrder: (id: number) =>
       request<PurchaseOrder>(`${base}/purchase-orders/${id}/final-approve`, token, { method: "POST" }),
-<<<<<<< HEAD
     unapprovePurchaseOrder: (id: number) =>
       request<PurchaseOrder>(`${base}/purchase-orders/${id}/unapprove`, token, { method: "POST" }),
-=======
->>>>>>> 818c00e39714eade44831f61e1109ac4c86d1b77
   };
 }
